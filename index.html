@@ -2349,6 +2349,31 @@ function mmBay(b){
 }
 
 // ---------- 区間ごとの名物（実際の景色に寄せる） ----------
+
+function roadsideAtsugi(b){ // 厚木の国道ぞい：ガソリンスタンド（屋根・給油機・値段の看板）とホームセンター（大きな店と2本足の看板）。名前は架空
+  const gr=(x,w)=>{const g=ctx.createLinearGradient(x,0,x+w,0);g.addColorStop(0,'#ffb01a');g.addColorStop(.5,'#ff6a1a');g.addColorStop(1,'#e0201a');return g;};
+  // --- ガソリンスタンド ---
+  {const x=b+30;F(x,124,74,8,'#7a7c82');                                                     // 敷地
+    F(x+50,112,22,14,'#f2f2f0');F(x+50,112,22,1,'#ff6a1a');glass(x+52,116,18,8);stxt('洗車',x+61,113.8,2,'#1f3f8a');   // 事務所
+    ctx.fillStyle=gr(x+4,44);ctx.fillRect(x+4,107,44,4.6);F(x+4,111.6,44,1.2,'#d8dce2');F(x+4,106.6,44,0.5,'#ffd27a');      // 屋根
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+12,109.3,1.6,0,7);ctx.fill();ctx.fillStyle='#ff6a1a';ctx.beginPath();ctx.arc(x+12,109.3,1.1,0,7);ctx.fill();stxt('MARINE',x+27,109.4,2.8,'#ffffff');
+    for(const px of [x+14,x+36])F(px,112.8,1.2,12,'#e6e8ec');
+    for(const px of [x+8,x+26]){F(px,119,6,6,'#eceef2');F(px,119,6,0.9,'#ff6a1a');F(px+1,120.4,4,1.6,'#16241a');}
+    // 値段の看板（高い柱の上）
+    ctx.save();ctx.translate(0,9);const sx=b+16;F(sx+3.4,96,1.6,30,'#6e7480');F(sx-0.5,124,9.6,2,'#8a8e96');
+    F(sx,72,8.6,26,'#1a1c22');ctx.fillStyle=gr(sx,8.6);ctx.fillRect(sx,72,8.6,6);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx+2.2,75,1.4,0,7);ctx.fill();stxt('SELF',sx+5.6,75.1,1.8,'#ffffff');
+    [['レギュラー','168','#e0352a'],['ハイオク','179','#f4c21a'],['軽油','148','#2aa04a']].forEach(([n,v,c],i)=>{const y=78.8+i*6.2;F(sx+0.5,y,7.6,5.6,'#2a2c34');F(sx+0.5,y,1.4,5.6,c);stxt(n,sx+4.8,y+1.3,1.3,'#ffffff');
+      ctx.shadowColor='#ff3a2a';ctx.shadowBlur=1;stxt(v,sx+4.9,y+3.9,2.8,'#ff4a3a','bold 2.8px "Courier New",monospace');ctx.shadowBlur=0;});
+    ctx.restore();nobori(x+46,'洗車','#1f5fbf','#ffffff');}
+  // --- ホームセンター ---
+  {const x=b+250;F(x,108,96,18,'#e8e6e0');F(x,108,96,1.2,'#d0cec6');F(x,110,96,4,'#f08a1a');F(x,114,96,1,'#2a8a4a');stxt('ホームセンター ミナト',x+48,112.1,2.8,'#ffffff');
+    F(x+8,116,24,10,'#4e6b84');F(x+19.7,116,0.6,10,'#c8ccd2');F(x+44,116,44,10,'#d8d6ce');for(let k=0;k<5;k++)F(x+46+k*8.4,117,7,9,'#c4c2ba');stxt('資材館',x+66,115.2,1.8,'#2a8a4a');  // 入口と資材館のシャッター
+    F(x-4,124,104,2,'#8a8c92');for(let k=0;k<8;k++)F(x+2+k*12,124.6,0.6,1.4,'#f2f2f2');
+    // 2本足の大きな看板
+    ctx.save();ctx.translate(0,10);const px=b+232;F(px+2,92,1.8,34,'#6e7480');F(px+18,92,1.8,34,'#6e7480');F(px,124,22,2,'#8a8e96');
+    F(px-1,68,24,26,'#ffffff');F(px-1,68,24,1,'#d8d8d8');F(px,69,22,13,'#f08a1a');stxt('ホームセンター',px+11,71.8,1.9,'#ffffff');stxt('ミナト',px+11,77.2,5,'#ffffff');
+    F(px,82,22,4.6,'#2a8a4a');stxt('資材・園芸・ペット',px+11,84.4,1.6,'#ffffff');F(px,87,22,6,'#1f4fb0');stxt('P',px+3.6,90,3.6,'#ffffff');stxt('500台',px+13,90.1,2.6,'#ffffff');ctx.restore();}
+}
 function groundBand(y0,col='#8fa27e'){const g=ctx.createLinearGradient(0,y0,0,136);g.addColorStop(0,shade(col,14));g.addColorStop(1,shade(col,-10));ctx.fillStyle=g;ctx.fillRect(-4,y0,328,136-y0);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(-4,y0,328,0.8);}
 function jcastle(x,base,s,roof='#4a5260',wall='#f4f2ec'){ // 天守（白い壁・灰色の屋根・石垣）
   ctx.save();ctx.translate(x,base);ctx.scale(s,s);
@@ -2436,9 +2461,7 @@ const BGS={
       rect(b+120,92,30,2,'#d6cdbf');});
     houses(o*0.4,280,132,44);
     // ロードサイドの看板（ガソリンスタンド・お店。どこかの実在の店ではない）
-    tile(o*0.5,460,b=>{rect(b+59.5,92,3,40,'#6e7480');rect(b+58,128,6,4,'#8a8e96');{const w=bgTextW('ガソリン',7)+8;rect(b+61-w/2,80,w,14,'#d8483b');rect(b+62-w/2,83,w-2,10,'#f4f4f4');}
-      bgLabel('ガソリン',b+61,88.5,7,'#1f2a44');
-      rect(b+259.5,98,3,34,'#6e7480');rect(b+258,128,6,4,'#8a8e96');boardText('ホームセンター',b+261,93,7,'#2f7a46','#ffffff');});
+    tile(o*0.5,620,b=>{ctx.save();ctx.translate(b,127);ctx.scale(1.3,1.3);ctx.translate(0,-127);roadsideAtsugi(0);ctx.restore();});  // 近いので大きく
     trees(o*0.62,220,135,'#4f8a4a',45,0.5);
   },
   fuji(o,lo){
