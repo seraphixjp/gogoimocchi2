@@ -1336,7 +1336,7 @@ function newGame(){
     nextCar:0,itemAcc:0,nextItem:300,coneAcc:0,nextCone:2200,cop:null,copCD:0,overT2:0,copSeen:false,caught:0,
     say:null,banner:null,bannerQ:[],sec:0,bar:{km:TOLL_KM+0.4,state:'up',vy:0,y:0,rot:0},flags:{},
     passed:0,hits:0,caughtN:0,shake:0,overT:0,paused:false,result:null,boostT:0,
-    water:WATER_MAX,dry:false,smoke:[],shoe:'ok',cloth:'ok',clothT:0,fireSayT:0,red:0,redN:0,smashed:0,flyers:[],kojiAcc:0,nextKoji:rnd(10,16),helmetKms:[rnd(95,150),rnd(200,270)],grbStop:0,grbSA:null,V:0,oji:{state:'stand',t:0,a:1,x:0,say:null},vms:{},dryT:0,ciQ:[],newsQ:[],news:null,phone:null,nextHitch:rnd(28,40),imoN:0,fartT:0,farts:0,photos:[],photoT:0,flash:0,inCar:null});
+    water:WATER_MAX,dry:false,smoke:[],shoe:'ok',cloth:'ok',clothT:0,fireSayT:0,red:0,redN:0,smashed:0,flyers:[],kojiAcc:0,nextKoji:rnd(10,16),helmetKms:[rnd(95,150),rnd(200,270)],grbStop:0,grbSA:null,V:0,oji:{state:'stand',t:0,a:1,x:0,say:null},vms:{},dryT:0,ciQ:[],newsQ:[],news:null,phone:null,nextHitch:rnd(28,40),imoN:0,fartT:0,farts:0,photos:[],photoT:0,flash:0,inCar:null,imoHold:false,imoFly:null});
   G.p={x:PX,y:GROUND-FOOT,vx:0,vy:0,on:true,jumps:0,inv:0,hurtT:0,anim:0,onCar:null};
   pauseBtn.hidden=true;
 }
@@ -1418,6 +1418,7 @@ function hurt(msg,loss){
   const p=G.p;if(p.inv>0||G.caught>0)return;
   G.v=Math.max(15,G.v-loss);p.inv=70;p.hurtT=26;p.vy=Math.min(p.vy,-4);p.on=false;p.onCar=null;p.vx=-2.4;
   G.hits++;G.shake=6;sfx('bar');snd('hurt');
+  if(G.imoHold){G.imoHold=false;const h=imoHandAt(p);G.imoFly={x:h[0],y:h[1],vx:2.6,vy:-6.5,rot:0,t:0};} // 食べかけの焼き芋が吹っ飛ぶ
   if(G.cloth!=='burnt'&&G.cloth!=='fire'){if(G.hits===3)G.tornSay={s:'服が破れたー！',t:30};else if(G.hits===6)G.tornSay={s:'ズボンまで破れたー！',t:30};} // ぶつかって服が破れた（少しあとで言う）
   G.say={s:msg||pick(['いっったー！！！','ｳﾜｰ!!!','いててて…','どこ見て走ってんだー！','あぶないでしょー！','もぉー！！']),t:0};
   addText(p.x+CW/2,p.y-6,`-${loss}km/h`,'#ff8a8a');
@@ -1542,6 +1543,7 @@ function update(){
   }
   for(const f of G.flyers){f.x+=f.vx-gs*0.3;f.y+=f.vy;f.vy+=0.35;f.rot+=f.vr;f.t++;}
   G.flyers=G.flyers.filter(f=>f.t<90&&f.y<300);
+  if(G.imoFly){const f=G.imoFly;f.x+=f.vx-gs*0.25;f.y+=f.vy;f.vy+=0.32;f.rot+=0.32;f.t++;if(f.y>GROUND+20||f.t>120)G.imoFly=null;}
   // 工事車両：高速で時々、車線に止まっている（手前にコーン）
   if(z==='hw'&&G.km>TOLL_KM+6&&G.km<GOAL_KM-16&&!inTunnel(G.km+3)&&!inJam(G.km+1.8)&&!inJam(G.km)){
     G.kojiAcc+=G.V/KMF;
@@ -2042,13 +2044,13 @@ function copUpdate(){
 }
 // スタート：いもっちの家の前。よしちゃんがGRBに乗り込んで、いもっちを乗せたつもりで出発してしまう
 function intro(){
-  G.introT++;const T=G.introT,t=T-110,y=G.yoshi;           // 最初の110フレームはいもっちの気合い
-  if(T===15)G.say={s:'今日は名古屋で取材だ！',t:0};
-  if(T===65)G.say={s:'今日は遅れないぞ！',t:0};
-  if(T===108)G.say=null;
+  G.introT++;const T=G.introT,t=T-170,y=G.yoshi;           // 最初の170フレームはいもっちの気合い（1秒待ってから話す）
+  if(T===75)G.say={s:'今日は名古屋で取材だ！',t:0};
+  if(T===125)G.say={s:'今日は遅れないぞ！',t:0};
+  if(T===168)G.say=null;
   if(y.say)y.say.t++;
   if(t===20)y.say={s:'いもっち、乗ったー？',t:0};
-  if(t===75){y.say=null;G.say={s:'（焼き芋うまっ…）',t:0};}
+  if(t===75){y.say=null;G.say={s:'（焼き芋うまっ…）',t:0};G.imoHold=true;}
   if(t===135){G.say=null;y.say={s:'よし、出発！',t:0};}
   if(t===175)y.x0=y.x;
   if(t>=175&&t<205){y.say=null;y.x=y.x0+(grbX()+36-y.x0)*(t-174)/30;y.walk+=1.6;}  // 運転席のドア（前のドア）まで歩く
@@ -2067,7 +2069,7 @@ function intro(){
 function drawYoshi(){
   const y=G.yoshi;if(!y||y.a<=0||(G.mode!=='intro'&&G.mode!=='clear'))return;
   const X=Math.round(y.x),Yp=GROUND-FOOT-2;
-  const spr=y.walk>0?YOSHI.walk[((y.walk/5)|0)%8]:(G.mode==='intro'&&G.introT-110>20&&G.introT-110<70?YOSHI.wave:YOSHI.idle);
+  const spr=y.walk>0?YOSHI.walk[((y.walk/5)|0)%8]:(G.mode==='intro'&&G.introT-170>20&&G.introT-170<70?YOSHI.wave:YOSHI.idle);
   ctx.globalAlpha=y.a;ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(X+12,GROUND-3,20,3);
   ctx.drawImage(spr,X,Yp-(1-y.a)*6);ctx.globalAlpha=1;
   if(y.say)drawSay({x:X,y:Yp},y.say.s);
@@ -3364,11 +3366,29 @@ function drawSmoke(){ // もくもく：丸を2重（影＋明るい面）で、
     ctx.fillStyle=m.g?'rgb(205,220,110)':`rgb(${v2},${v2},${v2+4})`;ctx.beginPath();ctx.arc(m.x-m.r*0.25,m.y-m.r*0.25,m.r*0.72,0,7);ctx.fill();}
   ctx.globalAlpha=1;
 }
+// 手に持った食べかけの焼き芋（1回ぶつかるまで）
+function poseFa(spr,CH){ // 今の絵の手前の腕の角度（renderChar の fa と同じ）
+  const k=CH.run.indexOf(spr);if(k>=0)return -0.75*Math.sin(k/8*Math.PI*2);
+  return spr===CH.jump?2.2:spr===CH.hurt?2.7:0.15;
+}
+function handXY(fa){const e=[21+6*Math.sin(fa),20+6*Math.cos(fa)],a=fa+0.35;return [e[0]+6*Math.sin(a),e[1]+6*Math.cos(a)];}
+function imoHandAt(p){const h=handXY(G.imoFa??0.15);return [p.x+h[0],p.y+h[1]];}
+function drawYakiimo(x,y,rot,bitten){ // 中心(x,y)。皮は赤紫・かじった所は黄色
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+  ctx.fillStyle=OUTLINE;ctx.beginPath();ctx.ellipse(0,0,6.2,3.2,0,0,7);ctx.fill();
+  ctx.fillStyle='#8e2f55';ctx.beginPath();ctx.ellipse(0,0,5.4,2.5,0,0,7);ctx.fill();
+  ctx.fillStyle='#b8507a';ctx.fillRect(-3.5,-1.8,5,1);
+  ctx.fillStyle='#5e1c38';ctx.fillRect(-1,0.6,1,1);ctx.fillRect(-4,0,1,1);
+  if(bitten){ctx.fillStyle='#f6c64a';ctx.beginPath();ctx.ellipse(4.2,0,2.2,2.4,0,0,7);ctx.fill();
+    ctx.fillStyle='#ffe28a';ctx.fillRect(3.4,-1.2,1.4,1);
+    ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(6.6,-1.4,1.6,0,7);ctx.arc(6.8,1.4,1.5,0,7);ctx.fill();ctx.globalCompositeOperation='source-over';}
+  ctx.restore();
+}
 function drawPlayer(p){
   let spr;const CH=charNow(false);
   if(p.hurtT>0)spr=CH.hurt;
   else if(!p.on)spr=CH.jump;
-  else if(G.mode==='intro')spr=(G.introT>95&&G.introT<115)||(G.introT>=440&&G.introT<460)?CH.jump:CH.idle;
+  else if(G.mode==='intro')spr=(G.introT>155&&G.introT<175)||(G.introT>=500&&G.introT<520)?CH.jump:CH.idle;
   else if(G.caught>0||G.mode==='over'||G.mode==='clear')spr=G.mode==='clear'&&G.overT<60?CH.hurt:CH.idle;
   else spr=CH.run[((p.anim/5)|0)%8];
   if(p.inv>0&&((p.inv/4|0)%2)&&G.mode==='play')return;
@@ -3389,6 +3409,9 @@ function drawPlayer(p){
   else ctx.translate(X,Y);
   if(G.red>0&&G.mode==='play'){ctx.globalAlpha=0.28;ctx.drawImage(spr,-14,0);ctx.globalAlpha=0.14;ctx.drawImage(spr,-28,0);ctx.globalAlpha=1;}
   ctx.drawImage(spr,0,0);
+  G.imoFa=poseFa(spr,CH);
+  if(G.imoHold){const h=handXY(G.imoFa);drawYakiimo(h[0]+1.5,h[1]-2.2,-0.5,true);
+    if(G.mode==='intro'){ctx.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<2;i++){const tt=(G.time*0.6+i*14)%28;ctx.fillRect(h[0]+5+i*2-Math.sin(tt/5)*1.5,h[1]-6-tt*0.5,1,2);}}}
   if(G.red>0&&G.mode==='play'){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=(0.6+0.25*Math.sin(G.time/3))*(G.red<60?G.red/60:1);ctx.drawImage(spr,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;}
   if((G.mode==='play'&&G.red<=0)||G.mode==='clear'){const fp=firePoints(spr),t=G.time;
     if(G.shoe==='fire')for(const [fx,fy] of fp.feet)flame(fx,fy+1,2.2,t*0.6+fx);
@@ -3750,6 +3773,7 @@ function draw(){
   for(const it of G.items)drawItem(it);
   if(G.smoke&&G.smoke.length)drawSmoke();
   drawPlayer(G.p);
+  if(G.imoFly){const f=G.imoFly;drawYakiimo(f.x,f.y,f.rot,true);}
   drawSpeedFx();
   drawTunnelFront();
   for(const f of G.fx){ctx.fillStyle=f.col;ctx.fillRect(Math.round(f.x),Math.round(f.y),2,2);}
@@ -3791,7 +3815,9 @@ function debugShot(name){
   if(name==='tornsheet'){G.mode='tornsheet';G.freeze=true;return;}
   if(/^bg_/.test(name)){const m=/^bg_([a-zA-Z]+)([\d.]*)$/.exec(name),sc=SECTIONS.find(x=>x.bg===m[1]);G.km=sc.km+(m[2]?+m[2]:3);G.time=900;G.mode='bgview';G.freeze=true;return;}
   if(name==='title'||name==='title2'||name==='title3'){G.mode='title';G.time=name==='title'?44:name==='title3'?300:150;G.km=name==='title'?0:100;G.freeze=true;return;}
-  if(/^intro/.test(name)){const n={intro:30,intro2:260,intro3:450,intro4:300,intro5:322,intro6:447,intro7:520}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
+  if(name==='imohold'){for(let i=0;i<262;i++)update();G.freeze=true;return;}
+  if(name==='imorun'||name==='imofly'){while(G.mode==='intro')update();for(let i=0;i<40;i++)update();if(name==='imofly'){G.p.inv=0;hurt(null,10);for(let i=0;i<12;i++)update();}G.freeze=true;return;}
+  if(/^intro/.test(name)){const n={intro:90,intro2:320,intro3:510,intro4:360,intro5:382,intro6:507,intro7:580}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
   for(let i=0;i<540;i++)update();
   const sec=SECTIONS.find(x=>x.bg===name),kmm=/^km([\d.]+)$/.exec(name);
   const tgt=/^shops/.test(name)?5:kmm?+kmm[1]:sec?sec.km+5:{shoefire:40,shoesmoke:40,torn1:30,torn2:30,loc:24,bare:40,clothfire:40,burnt:40,jam:71.5,koji:40,red:100,sastop:60,carsay:30,sa:23.9,sa2:25.4,fuji2:72,tunnel:167.4,bridge:180.3,city:4,honmura:8.3,toll:11.9,tanzawa:30,fuji:85,shizuoka:150,hamana:222,aichi:280,nagoya:321,cop:60,caught:60,clear:140,clear2:140,clear3:140,over:200,losephoto:200,over2:200,toll2:11.9,toll3:11.9,toll4:11.9,vms:(vmsKms()[0]-0.25),speed:14.2,signs:23.3,sain:25.1,fart:40,orbis:41,carin:20,carin2:20,seam1:61.6,seam2:91.6,seam3:127.5,seam4:5.9,dry:30,hitch:30,news:15.6,phone:52,local:240,goalphoto:140,totsuka:24,totsuka2:24,shinkan:215,prints:30,caught2:60,result:140}[name]||0;
