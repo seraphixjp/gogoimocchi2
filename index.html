@@ -1976,7 +1976,8 @@ function intro(){
   G.grbKm+=G.grbV/KMF;
   if(t===250){sfx('vroom');addText(grbX()+40,170,'ブォン！','#ffffff');}
   if(t===275)G.say={s:'え？',t:0};
-  if(t===330){G.say={s:'ちょっ…置いてかないでー！！',t:0};snd('honk');}
+  if(t===330){G.say={s:'ちょっ…置いてかないでー！！',t:0};snd('honk');snd('jump');addText(G.p.x+CW+22,G.p.y+14,'ぴょこっ！','#ffe14d');}
+  if(t>=330&&t<350)G.p.y=GROUND-FOOT-Math.round(Math.sin((t-330)/20*Math.PI)*16);else if(t===350)G.p.y=GROUND-FOOT; // ぴょこっと跳ねる
   if(t===395){G.say=null;banner('よしちゃんに追いつけ！');G.bannerQ=['名古屋に着かれる前に！'];snd('stage');bgmStart(0);}
   if(G.banner)G.banner.t++;
   if(t>=430){G.mode='play';G.say=null;G.v=START_V;pauseBtn.hidden=false;snd('jump');}
@@ -2755,7 +2756,7 @@ function drawPlayer(p){
   let spr;const CH=G.cloth==='burnt'?CHAR_BURNT:G.shoe==='bare'?CHAR_BARE:CHAR;
   if(p.hurtT>0)spr=CH.hurt;
   else if(!p.on)spr=CH.jump;
-  else if(G.mode==='intro')spr=G.introT>95&&G.introT<115?CH.jump:CH.idle;
+  else if(G.mode==='intro')spr=(G.introT>95&&G.introT<115)||(G.introT>=440&&G.introT<460)?CH.jump:CH.idle;
   else if(G.caught>0||G.mode==='over'||G.mode==='clear')spr=G.mode==='clear'&&G.overT<60?CH.hurt:CH.idle;
   else spr=CH.run[((p.anim/5)|0)%8];
   if(p.inv>0&&((p.inv/4|0)%2)&&G.mode==='play')return;
@@ -3155,7 +3156,7 @@ function debugShot(name){
   newGame();
   if(name==='cars1'||name==='cars2'||name==='cars3'||/^cmp\d$/.test(name)){G.mode=name;G.freeze=true;return;}
   if(name==='title'||name==='title2'||name==='title3'){G.mode='title';G.time=name==='title'?44:name==='title3'?300:150;G.km=name==='title'?0:100;G.freeze=true;return;}
-  if(/^intro/.test(name)){const n={intro:30,intro2:260,intro3:450,intro4:300,intro5:322}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
+  if(/^intro/.test(name)){const n={intro:30,intro2:260,intro3:450,intro4:300,intro5:322,intro6:447}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
   for(let i=0;i<540;i++)update();
   const sec=SECTIONS.find(x=>x.bg===name),kmm=/^km([\d.]+)$/.exec(name);
   const tgt=kmm?+kmm[1]:sec?sec.km+5:{shoefire:40,shoesmoke:40,bare:40,clothfire:40,burnt:40,jam:71.5,koji:40,red:100,sastop:60,carsay:30,sa:23.9,sa2:25.4,fuji2:72,tunnel:167.4,bridge:180.3,city:4,honmura:8.3,toll:11.9,tanzawa:30,fuji:85,shizuoka:150,hamana:222,aichi:280,nagoya:321,cop:60,caught:60,clear:140,clear2:140,clear3:140,over:200,losephoto:200,over2:200,toll2:11.9,toll3:11.9,toll4:11.9,vms:(vmsKms()[0]-0.25),speed:14.2,signs:23.3,sain:25.1,fart:40,orbis:41,carin:20,carin2:20,seam1:61.6,seam2:91.6,seam3:127.5,seam4:5.9,dry:30,hitch:30,news:15.6,phone:52,local:240,goalphoto:140,totsuka:24,totsuka2:24,shinkan:215,prints:30,caught2:60,result:140}[name]||0;
