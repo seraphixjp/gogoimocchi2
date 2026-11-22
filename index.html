@@ -2086,19 +2086,146 @@ function clearScene(){
 // ---------- 一般道と料金所の前の道沿い（背景の座標＝320x180で描く。道路と同じ速さで流れる） ----------
 const TOLLAPP_KM=TOLL_KM-1.2;   // ここから先は料金所の前
 const SHOPS=['コンビニ','ラーメン','薬局','クリーニング','不動産','カフェ','居酒屋','床屋','本屋','花屋','弁当','歯科'];
+
+// ---------- 一般道の店先（店ごとに作りこむ。名前はすべて架空） ----------
+const F=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};          // 丸めない四角（細かい部分用）
+const MFONT=(px)=>`bold ${px}px "Hiragino Mincho ProN","Yu Mincho","MS PMincho",serif`;
+function stxt(t,x,y,px,col,font,align='center'){ctx.font=typeof font==='string'?font:(font||JFONT)(px);ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillStyle=col;ctx.fillText(t,x,y);}
+function vtxt(t,x,y,px,col,font){for(let i=0;i<t.length;i++)stxt(t[i],x,y+i*px*1.05,px,col,font);}   // 縦書き
+function sode(x,y,t,bg,fg,font,px=3.6){const h=t.length*px*1.05+3;F(x,y,7,h,bg);F(x,y,7,0.6,shade(bg,30));F(x-1.5,y+1,1.5,0.6,'#6a6e76');F(x-1.5,y+h-2,1.5,0.6,'#6a6e76');vtxt(t,x+3.5,y+2.4,px,fg,font);} // 袖看板
+function nobori(x,t,col,fg){F(x,104,0.6,33,'#d8d8dc');F(x+0.6,105,5,24,col);F(x+0.6,105,5,1.6,shade(col,-30));vtxt(t,x+3.1,108.5,3.3,fg);} // のぼり
+function lantern(x,y,col='#e0332a',s=1){ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(x,y,2.4*s,3.4*s,0,0,7);ctx.fill();F(x-1.4*s,y-3.8*s,2.8*s,1*s,'#1a1a1a');F(x-1.4*s,y+2.9*s,2.8*s,1*s,'#1a1a1a');
+  ctx.strokeStyle='rgba(0,0,0,.18)';ctx.lineWidth=0.3;for(let k=-2;k<=2;k++){ctx.beginPath();ctx.moveTo(x-2.3*s,y+k*1.2*s);ctx.lineTo(x+2.3*s,y+k*1.2*s);ctx.stroke();}}
+function glass(x,y,w,h,frame='#c8ccd2'){F(x,y,w,h,'#4e6b84');const g=ctx.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,'rgba(255,255,255,.28)');g.addColorStop(.45,'rgba(255,255,255,0)');g.addColorStop(.6,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(x,y,w,h);
+  F(x,y,w,0.8,frame);F(x,y+h-0.8,w,0.8,frame);for(let k=0;k<=w;k+=Math.max(6,w/Math.round(w/9)))F(Math.min(x+k,x+w-0.8),y,0.8,h,frame);}
+function upWin(x,y,w,h,r){F(x,y,w,h,'#8fb2cc');F(x,y,w,0.7,'#e8ecf0');F(x+w/2-0.3,y,0.6,h,'#e8ecf0');if(r<0.5)F(x+0.6,y+0.6,w/2-1,h-1.2,r<0.25?'#e9dfc8':'#d9e4ea');F(x-0.6,y+h,w+1.2,0.8,'#b4b4b4');} // 2階の窓（カーテン）
+function acUnit(x,y){F(x,y,6,4.4,'#e6e8ea');F(x,y+4.4,6,0.5,'#a8acb2');ctx.strokeStyle='#9aa0a8';ctx.lineWidth=0.35;ctx.beginPath();ctx.arc(x+2.2,y+2.2,1.5,0,7);ctx.stroke();F(x+4.2,y+0.8,1.2,2.8,'#c4c8cc');}
+function body(X,w,h,wall,r){const top=137-h;F(X,top,w,h,wall);F(X+w-2.5,top,2.5,h,shade(wall,-22));F(X,top,w,1.2,shade(wall,-30));F(X,top+1.2,w,0.6,shade(wall,20));return top;}
+function bike(x){ctx.strokeStyle='#3a3e46';ctx.lineWidth=0.45;ctx.beginPath();ctx.arc(x,135.2,1.8,0,7);ctx.arc(x+5.4,135.2,1.8,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(x,135.2);ctx.lineTo(x+2.4,132.6);ctx.lineTo(x+5.4,135.2);ctx.moveTo(x+2.4,132.6);ctx.lineTo(x+4.6,132.4);ctx.stroke();F(x+1.6,131.9,1.8,0.6,'#3a3e46');}
+function vend(x,col='#2a6fd6'){F(x,124,7,13,'#f2f4f6');F(x,124,7,1.4,col);for(let k=0;k<3;k++)for(let j=0;j<3;j++)F(x+0.9+j*1.9,126+k*2.2,1.3,1.6,['#e24a3a','#f2b630','#3aa0e0','#5ac05a','#f2f2f2'][(k*3+j)%5]);F(x+1,133,5,1.6,'#1a1c22');F(x+5,128,1,1.4,'#7a7e86');}
+const SHOP_ROW=[ // [種類, 幅]
+  ['conv',88],['ramen',46],['fudosan',44],['coin',42],['barber',34],['izakaya',44],['mansion',52],['gas',128],['cafe',40],['drug',72],['cleaning',38],['book',50],['bento',42]];
+const SHOP_SPAN=SHOP_ROW.reduce((a,[k,w])=>a+w+2,0);
+const SHOPDRAW={
+  conv(X,w){ // コンビニ：白い平屋・青と黄色の帯・大きなガラス・ポスター・立て看板（ポールサイン）
+    const top=body(X,w,25,'#f6f6f4');F(X,top,w,8,'#ffffff');F(X,top+5.4,w,1.3,'#1e4fb0');F(X,top+6.7,w,1.1,'#f4c21a');F(X,top+7.8,w,1.3,'#1e4fb0');
+    stxt('ミナトマート',X+w/2,top+3,4.2,'#1e4fb0');
+    glass(X+2,top+10,w-5,14);F(X+w/2-5,top+10,10,14,'#3e5a72');F(X+w/2-0.3,top+10,0.6,14,'#c8ccd2');stxt('24H',X+w/2,top+12.2,2.6,'#ffffff');
+    for(const [px,c] of [[6,'#f4c21a'],[14,'#e24a3a'],[w-22,'#3aa0e0'],[w-14,'#f4c21a']]){F(X+px,top+11.5,6,8,c);F(X+px+0.8,top+12.5,4.4,3,'#ffffff');}  // 窓のポスター
+    F(X+3,132,w-6,1.2,'#d8d8d8');F(X+6,134.5,10,2.5,'#c8c8c8');F(X+w-16,134.5,10,2.5,'#c8c8c8');               // 車止め
+    F(X+w-6,96,1.6,41,'#9aa0a8');F(X+w-12,88,14,12,'#ffffff');F(X+w-12,88,14,1.2,'#1e4fb0');F(X+w-12,96.6,14,1.2,'#f4c21a');F(X+w-12,97.8,14,1.2,'#1e4fb0');stxt('MINATO',X+w-5,91.6,2.6,'#1e4fb0');stxt('MART',X+w-5,94.6,2.6,'#1e4fb0');
+    bike(X+16);bike(X+24);
+  },
+  ramen(X,w,r){ // ラーメン屋：黄色い大看板・赤いのれん・赤ちょうちん・袖看板・メニューの立て看板
+    const top=body(X,w,36,'#e8dcc8');upWin(X+4,top+4,15,7,r());upWin(X+w-21,top+4,15,7,r());
+    F(X+1,top+13,w-2,8,'#f6cf2a');F(X+1,top+13,w-2,0.7,'#ffffff');F(X+1,top+20.3,w-2,0.7,'#c89a10');stxt('らーめん',X+w/2-3,top+17.2,5.4,'#d4201a');stxt('中華そば',X+w-8,top+17.4,2.6,'#5a2a10');
+    F(X+2,top+21,w-4,15,'#6a4a32');glass(X+4,top+22,w-8,14,'#5a3a22');
+    F(X+8,top+21.5,w-16,6.5,'#c8201a');for(let k=1;k<4;k++)F(X+8+k*(w-16)/4-0.3,top+23.5,0.6,4.5,'#6a1010');
+    ['ら','ー','め','ん'].forEach((c,k)=>stxt(c,X+8+(k+0.5)*(w-16)/4,top+25,3,'#ffffff'));
+    lantern(X+5,top+25);lantern(X+w-5,top+25);
+    sode(X+w-5,top+1,'ラーメン','#d4201a','#ffffff');
+    F(X+w-12,129,6,8,'#2a2a2a');F(X+w-11.4,129.6,4.8,6.6,'#f2f2ea');for(let k=0;k<4;k++)F(X+w-10.6,130.6+k*1.4,3.2,0.5,'#c8201a');
+  },
+  fudosan(X,w,r){ // 不動産屋：青い看板・ガラス一面の物件の貼り紙／2階は歯科（窓に文字）
+    const top=body(X,w,38,'#e4e8ec');F(X+3,top+3,w-6,9,'#a8c8e0');F(X+3,top+3,w-6,0.7,'#f0f0f0');for(let k=1;k<4;k++)F(X+3+k*(w-6)/4-0.3,top+3,0.6,9,'#f0f0f0');
+    stxt('ひまわり歯科',X+w/2,top+7.6,3.6,'#ffffff');stxt('2F',X+w-7,top+10.4,2.2,'#2a6fd6');
+    F(X+1,top+14,w-2,7,'#1f5fbf');stxt('ミナト不動産',X+w/2,top+17.6,4.2,'#ffffff');F(X+1,top+20.6,w-2,0.6,'#163f80');
+    glass(X+3,top+22,w-6,15);for(let k=0;k<4;k++)for(let j=0;j<2;j++){const x=X+5+k*((w-12)/4),y=top+23.5+j*6.2;F(x,y,(w-12)/4-1.5,5.2,'#fafafa');F(x+0.6,y+0.6,(w-12)/4-2.7,1.6,'#9ac0e0');F(x+0.6,y+2.8,(w-12)/4-4,0.4,'#666');F(x+0.6,y+3.6,(w-12)/4-5,0.4,'#666');stxt(['2LDK','1K','3LDK','1R'][(k+j)%4],x+(w-12)/8-0.7,y+1.5,1.4,'#e24a3a');}
+    sode(X+1,top+1,'歯科','#ffffff','#2a6fd6',JFONT,3.4);F(X+1,top+1,7,0.6,'#2a6fd6');
+  },
+  coin(X,w){ // コインパーキング：白線・ロック板・黄色い「P」の看板・止まっている車
+    F(X,130,w,7,'#5a5c62');for(let k=0;k<=3;k++)F(X+2+k*12.6,130,0.7,7,'#f2f2f2');for(let k=0;k<3;k++)F(X+6+k*12.6,134.6,5,0.9,'#d8b020');
+    const car=(x,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x,134);ctx.lineTo(x+1,129.6);ctx.lineTo(x+3,127.6);ctx.lineTo(x+8,127.6);ctx.lineTo(x+10,129.6);ctx.lineTo(x+10.6,134);ctx.fill();F(x+3.4,128.4,2.2,1.4,'#9ac0dc');F(x+6,128.4,2.2,1.4,'#9ac0dc');F(x+1.2,133.4,2,2,'#1a1a1a');F(x+7.6,133.4,2,2,'#1a1a1a');};
+    car(X+3.5,'#e8e8ea');car(X+29,'#2a3a5a');
+    F(X+w-7,100,1.4,37,'#9aa0a8');F(X+w-13,92,13,13,'#f4c21a');F(X+w-12,93,11,11,'#1a1a1a');stxt('P',X+w-6.5,98.6,8,'#f4c21a');
+    F(X+w-13,105,13,7,'#ffffff');stxt('20分 200円',X+w-6.5,107.2,2.1,'#1a1a1a');stxt('最大 1200円',X+w-6.5,110,2.1,'#d4201a');
+    F(X+w-18,128,4,9,'#f4c21a');F(X+w-17.4,129,2.8,2,'#1a1a1a');vend(X+15.5,'#e0352a');  // 精算機と自販機
+  },
+  barber(X,w,r){ // 床屋：回るサインポール・白い看板
+    const top=body(X,w,34,'#f0f0f0');upWin(X+4,top+4,w-10,7,r());
+    F(X+1,top+13,w-2,6.6,'#ffffff');F(X+1,top+19,w-2,0.8,'#1f3f8a');stxt('BARBER ヒロ',X+w/2,top+16.4,3.4,'#1f3f8a');
+    glass(X+3,top+20,w-12,14);
+    const px=X+w-6,py=top+20;F(px-0.4,py-1,3.6,1,'#c8ccd2');F(px-0.4,py+11,3.6,1,'#c8ccd2');ctx.save();ctx.beginPath();ctx.rect(px,py,2.8,11);ctx.clip();F(px,py,2.8,11,'#ffffff');
+    const t=(G.time*0.12)%6;for(let k=-3;k<4;k++){const y=py+k*3.6+t;poly([[px,y],[px+2.8,y-1.4],[px+2.8,y],[px,y+1.4]],k%2?'#d4201a':'#1f4fb0');}ctx.restore();
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(px+0.4,py,0.6,11);
+  },
+  izakaya(X,w,r){ // 居酒屋：木の外壁・黒い看板に白い字・大きな赤ちょうちん・紺ののれん・ビールケース
+    const top=body(X,w,35,'#4a3a2c');for(let k=0;k<w;k+=3)F(X+k,top+2,0.4,33,'#3a2c20');upWin(X+5,top+4,12,6,r());
+    F(X+1,top+12,w-2,8,'#16141a');F(X+1,top+12,w-2,0.6,'#8a7a5a');stxt('居酒屋',X+12,top+16.2,3,'#e8d8b0',MFONT);stxt('ちどり',X+w/2+6,top+16,5,'#ffffff',MFONT);
+    F(X+3,top+20,w-6,15,'#2a2018');F(X+5,top+21,w-10,13,'#d8c8a0');for(let k=0;k<4;k++)F(X+5+k*(w-10)/4,top+21,0.5,13,'#6a5038');for(let k=1;k<4;k++)F(X+5,top+21+k*3.3,w-10,0.4,'#6a5038'); // 格子戸と障子
+    F(X+9,top+20.4,w-18,5.4,'#1a2a5a');F(X+w/2-0.3,top+21.5,0.6,4.3,'#0a1430');stxt('酒',X+w/2-5,top+23.2,3,'#ffffff',MFONT);stxt('肴',X+w/2+5,top+23.2,3,'#ffffff',MFONT);
+    lantern(X+5,top+24,'#e0332a',1.25);stxt('酒',X+5,top+24.2,2.4,'#1a1a1a',MFONT);lantern(X+w-5,top+24,'#e0332a',1.25);stxt('焼鳥',X+w-5,top+24.2,1.7,'#1a1a1a',MFONT);
+    for(let k=0;k<2;k++){F(X+w-12+k*0,133-k*3,7,3,'#e8b020');F(X+w-12,133-k*3,7,0.5,'#b88010');}
+    sode(X+w-4,top-6,'やきとり','#c8201a','#ffffff',MFONT,3.4);
+  },
+  mansion(X,w,r){ // マンション：ベランダ・洗濯物・1階はエントランス
+    const top=body(X,w,64,'#e9e2d4');for(let f=0;f<5;f++){const y=top+4+f*11;for(let k=0;k<3;k++){const x=X+3+k*(w-6)/3;F(x+1,y,(w-6)/3-2,6.4,'#86a4bc');
+      F(x+1,y,(w-6)/3-2,0.6,'#d8e0e8');F(x,y+6.4,(w-6)/3,3.6,'#d4cbbb');F(x,y+6.4,(w-6)/3,0.5,'#f4efe6');
+      if(r()<0.4){const c=['#ffffff','#f08a8a','#8ab4f0','#f2d36a'][(r()*4)|0];F(x+3,y+3.6,2.4,3.2,c);F(x+6.4,y+3.6,2.4,2.6,'#ffffff');F(x+2,y+3.4,10,0.3,'#888');}
+      if(r()<0.5)acUnit(x+(w-6)/3-8,y+2.4);}}
+    F(X+w/2-7,top+58,14,6,'#4e6b84');F(X+w/2-8,top+57,16,1.2,'#a8a29a');stxt('グランミナト',X+w/2,top+55.6,2.4,'#6a5a44',MFONT);
+    F(X+3,131,8,6,'#5a8a4a');F(X+w-11,131,8,6,'#5a8a4a');
+  },
+  gas(X,w){ // ガソリンスタンド：屋根（キャノピー）・給油機・事務所・価格の看板（LED）・のぼり
+    F(X+10,114,w-44,16,'#d6d8dc');for(let k=0;k<w-44;k+=6)F(X+10+k,114,0.4,16,'#c0c4ca');F(X+10,114,w-44,1,'#eceef0');ctx.fillStyle='#4f8a4a';for(let k=0;k<6;k++){ctx.beginPath();ctx.arc(X+16+k*15,113.5,4.5,Math.PI,0);ctx.fill();} // 奥の塀と植え込み
+    {const wx=X+60;F(wx,111,26,19,'#2a6fd6');F(wx+2,114,22,16,'#26303a');F(wx,111,26,2.4,'#1a4fa0');stxt('洗車機',wx+13,112.3,2,'#ffffff');for(let k=0;k<4;k++)F(wx+4+k*5,115,1.6,15,['#e24a3a','#f2b630','#3aa0e0','#5ac05a'][k]);} // 洗車機
+    for(const [tx,ty] of [[X+38,124],[X+44,124],[X+41,119.6]]){ctx.fillStyle='#1e2024';ctx.beginPath();ctx.arc(tx,ty+3,2.6,0,7);ctx.fill();ctx.fillStyle='#6a6e76';ctx.beginPath();ctx.arc(tx,ty+3,1,0,7);ctx.fill();} // タイヤの山
+    F(X,135,w,2,'#8a8c92');F(X,130,w,5,'#6a6c72');
+    const cx=X+14,cw=78;F(cx,99,cw,8,'#ffffff');F(cx,99,cw,0.8,'#e8e8e8');F(cx,103.6,cw,2.2,'#e0352a');F(cx,105.8,cw,1.2,'#1f3f8a');F(cx,107,cw,1.4,'#d8dce2');
+    stxt('マリン石油',cx+cw/2,101.6,3.6,'#1f3f8a');for(let k=0;k<6;k++)F(cx+6+k*12.5,108.2,6,0.7,'#fffbe0');  // 屋根の下の照明
+    for(const px of [cx+18,cx+cw-20]){F(px,108.4,2.2,26.6,'#e6e8ec');F(px+1.6,108.4,0.6,26.6,'#b8bcc4');}
+    for(const px of [cx+6,cx+cw-32]){F(px,133,24,2,'#d8d8d8');F(px+6,121,10,12,'#e8eaee');F(px+6,121,10,1.6,'#e0352a');F(px+7.6,123.4,6.8,3.2,'#16241a');stxt('168',px+11,125,2.2,'#4aff7a','bold 2.2px monospace');
+      F(px+7,127.6,3,1.2,'#f4c21a');F(px+11,127.6,3,1.2,'#e0352a');F(px+15.4,123,0.6,7,'#2a2a2a');F(px+16,124,1.4,2.4,'#2a2a2a');}
+    F(cx+cw/2-8,108.6,16,5,'#ffffff');F(cx+cw/2-8,108.6,16,0.6,'#e0352a');stxt('SELF 給油',cx+cw/2,111.2,2.6,'#e0352a');
+    // 事務所（洗車機の案内つき）
+    const ox=X+w-34;F(ox,113,32,24,'#f2f2f0');F(ox,113,32,1.2,'#e0352a');glass(ox+2,118,28,14);F(ox+20,118,8,14,'#3e5a72');stxt('洗車',ox+9,115.6,2.6,'#1f3f8a');stxt('オイル交換',ox+23,115.6,2.2,'#1f3f8a');
+    // 価格の看板（ポールサイン）：レギュラー／ハイオク／軽油
+    const sx=X+2;F(sx+4.4,98,1.8,39,'#9aa0a8');F(sx,74,11,30,'#1a1c22');F(sx,74,11,6,'#e0352a');stxt('セルフ',sx+5.5,77.2,2.8,'#ffffff');
+    const rows=[['レギュラー','168','#e0352a'],['ハイオク','179','#f4c21a'],['軽油','148','#2aa04a']];
+    rows.forEach(([n,v,c],i)=>{const y=81+i*7.4;F(sx+0.6,y,9.8,7,'#2a2c34');F(sx+0.6,y,2,7,c);stxt(n,sx+6.2,y+1.6,1.7,'#ffffff');
+      ctx.shadowColor='#ff3a2a';ctx.shadowBlur=1.5;stxt(v,sx+6.4,y+4.8,3.6,'#ff4a3a','bold 3.6px "Courier New",monospace');ctx.shadowBlur=0;});
+    nobori(X+cx-X-3,'会員価格','#e0352a','#ffffff');nobori(X+cx-X+cw+2,'洗車','#1f5fbf','#ffffff');
+  },
+  cafe(X,w,r){ // カフェ：れんがの壁・しま模様の日よけ・鉢植え・黒板の立て看板
+    const top=body(X,w,33,'#a85a40');for(let y=top+2;y<137;y+=1.6)for(let x=X+((y-top)/1.6%2?0:1.6);x<X+w-2.5;x+=3.2)F(x,y,0.3,1.6,'#8a4630');for(let y=top+2;y<137;y+=1.6)F(X,y,w-2.5,0.25,'#8a4630');
+    upWin(X+5,top+4,w-12,7,r());F(X+3,top+13,w-6,5,'#2a2420');stxt('Café Minato',X+w/2,top+15.6,3.2,'#f2e6c8',MFONT);
+    for(let k=0;k<w-4;k+=3)F(X+2+k,top+18.5,1.5,3.4,k%6?'#ffffff':'#2a7a4a');ctx.fillStyle='#1f6a3e';for(let k=0;k<w-4;k+=3){ctx.beginPath();ctx.arc(X+3.5+k,top+21.9,1.5,0,Math.PI);ctx.fill();}
+    glass(X+3,top+23,w-6,10,'#3a2a20');F(X+w/2-3,top+23,6,10,'#3e2a1e');
+    for(const px of [X+3,X+w-7]){F(px,132,4,5,'#8a5a3a');ctx.fillStyle='#3f8a3a';ctx.beginPath();ctx.arc(px+2,130.6,2.8,0,7);ctx.fill();}
+    F(X+w/2+5,130,5,7,'#2a2a2a');F(X+w/2+5.4,130.4,4.2,4.4,'#2a3a30');stxt('OPEN',X+w/2+7.5,131.5,1.4,'#ffffff');F(X+w/2+6,133.4,3,0.4,'#f2b630');
+  },
+  drug(X,w,r){ // ドラッグストア：白い大看板に赤い「くすり」・黄色い値札・店先のワゴン・のぼり
+    const top=body(X,w,30,'#f4f4f2');F(X,top+1.2,w,10,'#ffffff');stxt('くすり',X+20,top+6.4,7,'#e0201a');stxt('ドラッグ ミナト',X+w-20,top+4.6,3,'#1a8a3a');stxt('化粧品・日用品',X+w-20,top+8.6,2.6,'#555555');F(X,top+11,w,1.2,'#1a8a3a');
+    glass(X+2,top+13,w-5,17);for(let k=0;k<5;k++){F(X+6+k*13,top+14.5,9,4.4,'#f4d21a');stxt(['SALE','特価','10%','OFF','2割'][k],X+10.5+k*13,top+16.8,2.2,'#e0201a');}
+    F(X+w/2-6,top+13,12,17,'#3e5a72');F(X+w/2-0.3,top+13,0.6,17,'#c8ccd2');
+    for(const px of [X+5,X+w-19]){F(px,129,14,8,'#e8eaee');F(px,129,14,1,'#b8bcc4');for(let k=0;k<6;k++)F(px+1+k*2.2,126.6,1.7,2.4,['#f2b630','#e24a3a','#3aa0e0','#5ac05a','#f2f2f2','#c060c0'][k]);}
+    nobori(X+22,'大特価','#e0201a','#ffffff');
+  },
+  cleaning(X,w,r){ // クリーニング店：水色の看板・値段の貼り紙・つるした服
+    const top=body(X,w,34,'#e6eef4');upWin(X+4,top+4,w-10,7,r());
+    F(X+1,top+13,w-2,7,'#3aa0e0');stxt('クリーニング',X+w/2,top+16.6,3.6,'#ffffff');F(X+1,top+19.6,w-2,0.6,'#1a70b0');
+    glass(X+3,top+21,w-6,13);F(X+5,top+22.4,w-10,0.4,'#c8ccd2');for(let k=0;k<5;k++){const x=X+6+k*5.2;poly([[x,top+23],[x+4,top+23],[x+4.6,top+31],[x-0.6,top+31]],['#ffffff','#e8e2f0','#2a3a5a','#ffffff','#d8e8f8'][k]);}
+    F(X+w-13,top+23,9,5,'#ffffff');stxt('Yシャツ',X+w-8.5,top+24.4,1.6,'#1a70b0');stxt('180円',X+w-8.5,top+26.6,2,'#e0201a');
+  },
+  book(X,w,r){ // 本屋：紺の看板・店先の雑誌の棚
+    const top=body(X,w,36,'#efe6d6');upWin(X+4,top+4,15,7,r());upWin(X+w-21,top+4,15,7,r());
+    F(X+1,top+13,w-2,8,'#16306a');stxt('書店',X+12,top+17.2,5,'#ffffff',MFONT);stxt('BOOKS ミナト堂',X+w-17,top+17.2,2.8,'#f2d36a');
+    glass(X+3,top+22,w-6,14);for(let k=0;k<3;k++)for(let j=0;j<6;j++)F(X+5+j*6.5,top+23.5+k*4,5,3.4,['#e24a3a','#3aa0e0','#f2b630','#5ac05a','#f2f2f2','#c060c0','#ff8a3a'][(k*2+j)%7]);
+    F(X+6,128,16,9,'#8a6a4a');for(let k=0;k<3;k++)for(let j=0;j<5;j++)F(X+6.6+j*3.1,128.6+k*2.8,2.6,2.2,['#e24a3a','#3aa0e0','#f2b630','#f2f2f2','#5ac05a'][(j+k)%5]);
+  },
+  bento(X,w,r){ // 弁当屋：オレンジの看板・メニュー写真・持ち帰りの窓口
+    const top=body(X,w,32,'#f2e8da');upWin(X+5,top+4,w-12,7,r());
+    F(X+1,top+13,w-2,7,'#ff8a1a');stxt('お弁当 ほかほか亭',X+w/2,top+16.6,3,'#ffffff');F(X+1,top+19.6,w-2,0.8,'#c85a00');
+    for(let k=0;k<3;k++){F(X+4+k*11.6,top+21.5,10,6,'#ffffff');F(X+4.6+k*11.6,top+22,8.8,3.6,['#c8782a','#e8b84a','#a84a2a'][k]);stxt(['から揚','のり弁','焼肉'][k],X+9+k*11.6,top+26.6,1.6,'#333');}
+    glass(X+3,top+28,w-6,4);F(X+3,132,w-6,5,'#d8d0c4');
+  },
+};
+function cityShops(d){
+  tile(d,SHOP_SPAN,b=>{let x=b;
+    SHOP_ROW.forEach(([k,w],i)=>{if(x<330&&x+w>-10)SHOPDRAW[k](x,w,seeded(523+i*97));x+=w+2;});});
+}
 function citySide(d,endX=Infinity){ // 一般道：商店街の店先・電柱と電線・歩道・柵・信号（endX＝一般道の終わり。そこに最後の電柱を立てて電線をつなぐ）
-  // 店先（2階建ての店が並ぶ）
-  tile(d,420,b=>{const r=seeded(311);let x=0,i=0;
-    while(x<420){const w=38+((r()*30)|0),h=26+((r()*12)|0),X=b+x,top=137-h;
-      if(r()<0.12){x+=w*0.6;continue;}                                                     // ところどころ駐車場のすき間
-      const wall=['#efe6d6','#e4e8ec','#f2dcc8','#dfe6da','#e8e0e8'][(r()*5)|0],sign=['#d8312b','#1f5fbf','#2a8a4a','#e88a1a','#6a3fa0','#16306a'][(r()*6)|0];
-      rect(X,top,w,h,wall);rect(X+w-3,top,3,h,shade(wall,-24));rect(X,top,w,1,shade(wall,18));
-      for(let k=0;k<2;k++)rect(X+4+k*(w/2),top+3,w/2-8,6,'#8fb2cc');                            // 2階の窓
-      rect(X+1,top+12,w-2,7,sign);ptxt(SHOPS[(i+((r()*12)|0))%SHOPS.length],X+w/2,top+15.8,5.2,'#ffffff','center'); // 看板
-      rect(X+2,top+19,w-4,2,shade(sign,-30));for(let k=0;k<w-4;k+=4)rect(X+2+k,top+19,2,2,shade(sign,20)); // 日よけ
-      rect(X+3,top+22,w-6,h-23,'#5f7d96');rect(X+3,top+22,w-6,1.5,'#a8c4da');rect(X+w/2-3,top+22,6,h-23,'#3f5568'); // ガラスの店先と入口
-      if(r()<0.35){rect(X+w-9,128,6,9,'#e8ecf0');rect(X+w-8,129,4,3,'#2a6fd6');rect(X+w-8,133,4,1,'#16161c');}   // 自販機
-      x+=w+2;i++;}});
+  cityShops(d);   // 店先（店ごとに作りこんだ並び）
   // 歩道（タイル）と縁石
   rect(0,137,320,6,'#c9c5bb');tile(d,8,b=>rect(b,137,0.6,6,'#b2aea4'));rect(0,140,320,0.5,'#b8b4aa');rect(0,142,320,1.5,'#e8e5de');
   // 歩道の柵（白）
@@ -2175,22 +2302,47 @@ function seaBand(y0,y1,col,off){
   rect(0,y0,320,y1-y0,col);const r=seeded(9);ctx.fillStyle='rgba(255,255,255,.35)';
   for(let i=0;i<40;i++){const x=((r()*360-off*0.5)%360+360)%360-20,y=y0+2+r()*(y1-y0-3);ctx.fillRect(x,y,4+r()*6,1);}
 }
+
+function mmBay(b){
+  // ベイブリッジ（白い斜張橋。H形の塔2本・ケーブル）
+  {const x=b+20,deck=100;ctx.strokeStyle='rgba(240,244,248,.9)';ctx.lineWidth=0.35;
+    for(const tx of [x+40,x+110]){for(let k=1;k<=6;k++){ctx.beginPath();ctx.moveTo(tx,70+k*1.2);ctx.lineTo(tx-k*5.5,deck);ctx.moveTo(tx,70+k*1.2);ctx.lineTo(tx+k*5.5,deck);ctx.stroke();}}
+    F(x,deck,160,2.4,'#eef2f6');F(x,deck+2.4,160,1,'#9aa8b8');F(x,deck+1,160,0.5,'#c8d0da');
+    for(const tx of [x+40,x+110]){F(tx-3,68,1.6,40,'#f2f4f8');F(tx+1.4,68,1.6,40,'#dfe4ea');F(tx-3,76,6,1.2,'#e8ecf0');F(tx-3,deck+3.4,6,1.4,'#e8ecf0');}
+    for(const px of [x+4,x+152])F(px,deck+3,3,6,'#cfd6de');}
+  // 赤レンガ倉庫（海ぎわの低い建物2棟）
+  for(const [x,w] of [[b+196,30],[b+232,24]]){F(x,99,w,9,'#a8503a');F(x,98,w,1.2,'#6a6a6e');for(let k=0;k<w-3;k+=3.4){F(x+1.6+k,100.6,1.4,2,'#5a3a30');F(x+1.6+k,104.2,1.4,2,'#5a3a30');}F(x+w-2,99,2,9,'#8a3e2c');}
+  // ランドマークタワー（上にいくほど細くなる・てっぺんは四角い冠）
+  {const x=b+300,base=108,top=22;F(x-14,94,48,14,'#c8ced8');F(x-14,94,48,1,'#e6eaf0');for(let k=0;k<11;k++)F(x-12+k*4.2,97,2.6,1.4,'#8a9ab0');
+    poly([[x,base],[x+3,top+6],[x+17,top+6],[x+20,base]],'#c9d2de');poly([[x+11,top+6],[x+17,top+6],[x+20,base],[x+13,base]],'#a6b2c2');
+    for(let y=top+10;y<base;y+=2.6){const t=(y-top)/(base-top),l=x+3-3*t,rr=x+17+3*t;F(l+1,y,rr-l-2,0.6,'#93a3b8');}
+    F(x+3,top+2,14,4,'#b8c2d0');F(x+3.6,top+2.6,12.8,2.6,'#d8dee6');F(x+6,top,8,2,'#aab4c2');F(x+9.6,top-5,0.6,5,'#9aa4b2');F(x+9.6,top-5.6,0.8,0.8,(G.time>>4)%2?'#ff4a3a':'#a82a20');}
+  // クイーンズスクエア（3本の塔。海に向かって低くなる・屋根がななめ）
+  for(const [dx,hy,w] of [[26,58,13],[42,68,12],[57,76,11]]){const x=b+300+dx;poly([[x,108],[x,hy+4],[x+w,hy],[x+w,108]],'#bcc8d6');poly([[x+w-3.5,hy+1.2],[x+w,hy],[x+w,108],[x+w-3.5,108]],'#9aa8ba');
+    for(let y=hy+7;y<106;y+=2.4)F(x+1,y,w-5,0.6,'#8a9cb2');}
+  // 帆の形のホテル（白い半月）
+  {const x=b+388;ctx.fillStyle='#eef2f6';ctx.beginPath();ctx.moveTo(x,108);ctx.lineTo(x,70);ctx.quadraticCurveTo(x+30,74,x+28,108);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#cfd8e2';ctx.beginPath();ctx.moveTo(x+18,108);ctx.quadraticCurveTo(x+26,86,x+16,74);ctx.quadraticCurveTo(x+30,78,x+28,108);ctx.closePath();ctx.fill();
+    for(let y=74;y<106;y+=2.6)F(x+1,y,Math.min(15,(y-70)*0.8),0.5,'#a8b8ca');}
+  // 大観覧車（まん中に大きなデジタル時計）
+  {const cx=b+450,cy=80,R=24;ctx.strokeStyle='#e8eef5';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.stroke();ctx.lineWidth=0.5;ctx.beginPath();ctx.arc(cx,cy,R-3,0,7);ctx.stroke();
+    for(let i=0;i<30;i++){const a=i*Math.PI/15+G.time*0.002;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*7,cy+Math.sin(a)*7);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.stroke();
+      F(cx+Math.cos(a)*R-1.1,cy+Math.sin(a)*R-0.4,2.2,2.2,['#ff6a6a','#ffd34d','#6ad1ff','#8cff8c','#ffffff'][i%5]);}
+    poly([[cx-1,cy],[cx-13,110],[cx-10,110],[cx,cy+5]],'#cdd6e0');poly([[cx+1,cy],[cx+13,110],[cx+10,110],[cx,cy+5]],'#cdd6e0');
+    ctx.fillStyle='#1a2030';ctx.beginPath();ctx.arc(cx,cy,7.4,0,7);ctx.fill();const m=Math.floor(G.time/60),hh=12+((m/60)|0)%12,mm=m%60;
+    ctx.shadowColor='#4affd0';ctx.shadowBlur=1.2;stxt(hh+':'+String(mm).padStart(2,'0'),cx,cy+0.3,3.6,'#7affd8','bold 3.6px "Courier New",monospace');ctx.shadowBlur=0;}
+  // 海ぎわの公園の木
+  for(let k=0;k<8;k++){ctx.fillStyle='#4f8a4a';ctx.beginPath();ctx.arc(b+500+k*22,105,3.4,0,7);ctx.fill();}
+}
 const BGS={
   yokohama(o){
     skyC(['#78b2e8','#b6dbf6','#eaf5fb']);sunNo(262,28,8,'#fffbe0','rgba(255,250,210,.5)');
     cloudC(o*0.05,420,16,1,'#ffffff','#d5e2ee',3);
     seaBand(108,135,'#3f80b6',o*0.2);
-    // ランドマークの高いビルと観覧車（オリジナルの形）
-    tile(o*0.12,560,b=>{
-      const x=b+150;poly([[x,108],[x+4,30],[x+18,30],[x+22,108]],'#c2ccd8');poly([[x+14,30],[x+18,30],[x+22,108],[x+17,108]],'#9aa6b6');
-      rect(x+5,26,12,4,'#aeb8c6');for(let y=36;y<104;y+=4)rect(x+6,y,9,1,'#8a98ab');
-      const cx=b+330,cy=72,R=26;ctx.strokeStyle='#e8eef5';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.stroke();
-      for(let i=0;i<12;i++){const a=i*Math.PI/6+G.time*0.002;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.stroke();
-        rect(cx+Math.cos(a)*R-1.5,cy+Math.sin(a)*R-1,3,3,['#ff6a6a','#ffd34d','#6ad1ff','#8cff8c'][i%4]);}
-      poly([[cx-1,cy],[cx-14,108],[cx-10,108],[cx,cy+6]],'#cdd6e0');poly([[cx+1,cy],[cx+14,108],[cx+10,108],[cx,cy+6]],'#cdd6e0');
-    });
-    skyline(o*0.18,380,11,110,12,38,['#a9b8cc','#b8c4d6','#9fb0c6'],0.05);
-    skyline(o*0.45,300,12,135,18,52,['#d9d2c5','#c9ccd6','#e3e0da','#b9c2cf'],0.12);
+    // みなとみらいの景色（左から：ベイブリッジ・赤レンガ倉庫・ランドマークタワー・クイーンズスクエア・帆の形のホテル・大観覧車）
+    skyline(o*0.12,380,11,110,8,26,['#a9b8cc','#b8c4d6','#9fb0c6'],0.05);
+    tile(o*0.16,700,b=>mmBay(b));
+    skyline(o*0.45,300,12,135,14,34,['#d9d2c5','#c9ccd6','#e3e0da','#b9c2cf'],0.12);
     trees(o*0.7,180,135,'#4f8f4a',4,0.5);
   },
   bypass(o){
@@ -3325,7 +3477,7 @@ function debugShot(name){
   if(/^intro/.test(name)){const n={intro:30,intro2:260,intro3:450,intro4:300,intro5:322,intro6:447,intro7:520}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
   for(let i=0;i<540;i++)update();
   const sec=SECTIONS.find(x=>x.bg===name),kmm=/^km([\d.]+)$/.exec(name);
-  const tgt=kmm?+kmm[1]:sec?sec.km+5:{shoefire:40,shoesmoke:40,torn1:30,torn2:30,loc:24,bare:40,clothfire:40,burnt:40,jam:71.5,koji:40,red:100,sastop:60,carsay:30,sa:23.9,sa2:25.4,fuji2:72,tunnel:167.4,bridge:180.3,city:4,honmura:8.3,toll:11.9,tanzawa:30,fuji:85,shizuoka:150,hamana:222,aichi:280,nagoya:321,cop:60,caught:60,clear:140,clear2:140,clear3:140,over:200,losephoto:200,over2:200,toll2:11.9,toll3:11.9,toll4:11.9,vms:(vmsKms()[0]-0.25),speed:14.2,signs:23.3,sain:25.1,fart:40,orbis:41,carin:20,carin2:20,seam1:61.6,seam2:91.6,seam3:127.5,seam4:5.9,dry:30,hitch:30,news:15.6,phone:52,local:240,goalphoto:140,totsuka:24,totsuka2:24,shinkan:215,prints:30,caught2:60,result:140}[name]||0;
+  const tgt=/^shops/.test(name)?5:kmm?+kmm[1]:sec?sec.km+5:{shoefire:40,shoesmoke:40,torn1:30,torn2:30,loc:24,bare:40,clothfire:40,burnt:40,jam:71.5,koji:40,red:100,sastop:60,carsay:30,sa:23.9,sa2:25.4,fuji2:72,tunnel:167.4,bridge:180.3,city:4,honmura:8.3,toll:11.9,tanzawa:30,fuji:85,shizuoka:150,hamana:222,aichi:280,nagoya:321,cop:60,caught:60,clear:140,clear2:140,clear3:140,over:200,losephoto:200,over2:200,toll2:11.9,toll3:11.9,toll4:11.9,vms:(vmsKms()[0]-0.25),speed:14.2,signs:23.3,sain:25.1,fart:40,orbis:41,carin:20,carin2:20,seam1:61.6,seam2:91.6,seam3:127.5,seam4:5.9,dry:30,hitch:30,news:15.6,phone:52,local:240,goalphoto:140,totsuka:24,totsuka2:24,shinkan:215,prints:30,caught2:60,result:140}[name]||0;
   const adv=()=>{if(name!=='sastop')G.grbKm=Math.max(G.grbKm,G.km+4);G.water=WATER_MAX;G.p.inv=2;debugBot();update();};
   while(G.km<tgt&&G.mode==='play')adv();
   if(name==='loc'){for(let i=0;i<9000&&!(G.inCar&&G.inCar.loc&&G.inCar.t>20);i++)adv();}
@@ -3349,6 +3501,7 @@ function debugShot(name){
   if(name==='over2'){G.grbKm=GOAL_KM-0.001;G.grbV=100;update();for(let i=0;i<LOSE_PH+200;i++)update();}
   if(/^toll[234]$/.test(name)){const want={toll2:'wow',toll3:'chase',toll4:'fall'}[name];for(let i=0;i<3000&&G.oji.state!==want;i++)adv();for(let i=0;i<{toll2:10,toll3:30,toll4:24}[name];i++)adv();}
   if(name==='signs'||name==='sain'){for(let i=0;i<10;i++)adv();}
+  if(/^shops\d$/.test(name)){const o=[0,250,500][+name[5]];G.km=(SHOP_SPAN+o)/(PXKM/BG);G.cars.length=0;G.cones.length=0;G.items.length=0;G.say=null;G.inCar=null;}
   if(name==='fart'){G.imoN=1;G.fartT=1;for(let i=0;i<24;i++)adv();}
   if(name==='orbis'){G.v=150;for(let i=0;i<900&&!G.photos.length;i++){adv();G.v=Math.max(G.v,150);}for(let i=0;i<20;i++){adv();}}
   if(name==='carin'){for(let i=0;i<40;i++)adv();}
