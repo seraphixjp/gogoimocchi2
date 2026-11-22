@@ -1234,7 +1234,7 @@ function rankQualifies(time){ // ランキングを読めていて、自己ベ�
   const me=RANK.rows.find(r=>r.id===RANK.uid);if(me&&me.time>0&&Math.round(time)>=me.time)return false;
   return rankPosOf(time)<=10;
 }
-function rankOpenEntry(time){RANK.time=time;RANK.status='';rkEntry.hidden=false;rankEl.hidden=false;rkName.value=rankName;renderRank();}
+function rankOpenEntry(time){RANK.time=time;RANK.status='';RANK.retried=false;rkEntry.hidden=false;rankEl.hidden=false;rkName.value=rankName;renderRank();}
 async function rankSubmit(){
   if(rkEntry.hidden||RANK.busy)return;
   const nm=rkName.value.trim().slice(0,12);rkName.blur();
@@ -1243,9 +1243,11 @@ async function rankSubmit(){
     const res=await api({a:'submit',k:'time',v:Math.round(RANK.time),t:RANK.tok,n:nm});
     if(res&&res.err==='wait'){RANK.busy=false;setTimeout(rankSubmit,5500);return;}
     if(apply(res)){rankName=nm;try{localStorage.setItem('gogoimo2_name',rankName);}catch(e){}
-      RANK.status=res.saved?'ランキングに登録しました！':'自己ベストのほうが速いので、記録はそのままです';rkEntry.hidden=true;}
-    else RANK.status=res&&res.err==='cheat'?'このタイムは登録できませんでした':'登録できませんでした';
-  }catch(e){RANK.status='登録できませんでした（通信エラー）';}
+      RANK.status=res.saved||res.used?'ランキングに登録しました！':'自己ベストのほうが速いので、記録はそのままです';rkEntry.hidden=true;}  // used＝1回目の送信がもう届いていた
+    else RANK.status=(res&&res.err==='cheat'?'このタイムは登録できませんでした':'登録できませんでした')+'（'+(res&&res.err||'?')+'）'; // 理由をそのまま出す（問い合わせ用）
+  }catch(e){
+    if(!RANK.retried){RANK.retried=true;RANK.busy=false;RANK.status='もう一度送っています…';renderRank();setTimeout(rankSubmit,2000);return;} // 通信の失敗は1回だけ自動でやり直す
+    RANK.status='登録できませんでした（通信エラー）';}
   RANK.busy=false;renderRank();
 }
 document.getElementById('rkSave').addEventListener('click',e=>{e.stopPropagation();rankSubmit();});
