@@ -779,7 +779,7 @@ const AI_CARS={'grb':{w:110,wheels:[[40.5, 62.1, 17.4], [175.5, 62.1, 17.4]],src
 //  横浜で乗るはずだったGRBに置いていかれた。走って追いかけて、名古屋に着く前に追いつけ！
 //  ・車は同じ向きに走っている。追いついて、飛び越えて（屋根を渡って）追い越す
 //  ・いもっちは自然にどんどん加速。アイテムで速度アップ、ぶつかると減速
-//  ・本村ICから料金所を通って東名高速へ。名古屋までの街の景色
+//  ・環状2号線から新桜ヶ丘ICで高速へ、料金所を通って東名高速へ。名古屋までの街の景色
 //  ・120km/hを超えると、後ろからパトカーが追いかけてくる
 // ===================================================================
 
@@ -795,7 +795,7 @@ const HOME_KM=1.2, HOME_FADE_KM=1.6; // いもっちの家のまわり（km）�
 const HONMURA_KM=9, TOLL_KM=12, GOAL_KM=345;
 const SECTIONS=[
   {km:0,    name:'横浜',            bg:'yokohama'},
-  {km:6,    name:'保土ヶ谷バイパス', bg:'bypass'},
+  {km:6,    name:'環状2号線',       bg:'bypass'},
   {km:12,   name:'東名 横浜町田',    bg:'machida'},
   {km:21,   name:'厚木',            bg:'tanzawa'},
   {km:40,   name:'秦野',            bg:'hadano'},
@@ -1477,7 +1477,7 @@ function update(){
   // 区間が変わったら案内
   const si=secAt(G.km);
   if(si!==G.sec){G.sec=si;snd('stage');bgmSet(songFor());if(si>0)locNote(SECTIONS[si].name,'現在地');} // 地名は真ん中に出さず、つぶやきの場所に（次の順番で）
-  if(!G.flags.honmura&&G.km>=HONMURA_KM-1.5){G.flags.honmura=true;banner('本村IC から高速へ！','#9fe0a0');}
+  if(!G.flags.honmura&&G.km>=HONMURA_KM-1.5){G.flags.honmura=true;banner('新桜ヶ丘IC から高速へ！','#9fe0a0');}
   if(!G.flags.toll&&G.km>=TOLL_KM+0.6){G.flags.toll=true;banner('高速道路突入！','#ffd23a');G.bannerQ=['東名高速 名古屋まで '+Math.round(GOAL_KM-G.km)+'km'];snd('stage');G.say={s:'いくぞー！！',t:0};bgmSet(songFor());}
   if(!G.flags.jam&&G.km>=JAM_A-0.6){G.flags.jam=true;banner('渋滞発生！ 御殿場IC付近','#ff9a5a');G.bannerQ=['車の屋根を渡っていけ！'];G.say={s:'渋滞だー！屋根を渡るしかない！',t:0};snd('stage');}
   if(!G.flags.jamEnd&&G.km>=JAM_B+1.5){G.flags.jamEnd=true;banner('渋滞を抜けた！','#7dff8a');news('jam','渋滞の車の屋根を渡る男性　「屋根に足跡」と苦情');}
@@ -2104,17 +2104,25 @@ function body(X,w,h,wall,r){const top=137-h;F(X,top,w,h,wall);F(X+w-2.5,top,2.5,
 function bike(x){ctx.strokeStyle='#3a3e46';ctx.lineWidth=0.45;ctx.beginPath();ctx.arc(x,135.2,1.8,0,7);ctx.arc(x+5.4,135.2,1.8,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(x,135.2);ctx.lineTo(x+2.4,132.6);ctx.lineTo(x+5.4,135.2);ctx.moveTo(x+2.4,132.6);ctx.lineTo(x+4.6,132.4);ctx.stroke();F(x+1.6,131.9,1.8,0.6,'#3a3e46');}
 function vend(x,col='#2a6fd6'){F(x,124,7,13,'#f2f4f6');F(x,124,7,1.4,col);for(let k=0;k<3;k++)for(let j=0;j<3;j++)F(x+0.9+j*1.9,126+k*2.2,1.3,1.6,['#e24a3a','#f2b630','#3aa0e0','#5ac05a','#f2f2f2'][(k*3+j)%5]);F(x+1,133,5,1.6,'#1a1c22');F(x+5,128,1,1.4,'#7a7e86');}
 const SHOP_ROW=[ // [種類, 幅]
-  ['conv',88],['ramen',46],['fudosan',44],['coin',42],['barber',34],['izakaya',44],['mansion',52],['gas',128],['cafe',40],['drug',72],['cleaning',38],['book',50],['bento',42]];
+  ['conv',88],['ramen',46],['fudosan',44],['coin',42],['barber',34],['izakaya',44],['mansion',52],['gas',128],['cafe',40],['drug',72],['cleaning',38],['conv2',70],['book',50],['gyudon',44],['bento',42]];
 const SHOP_SPAN=SHOP_ROW.reduce((a,[k,w])=>a+w+2,0);
 const SHOPDRAW={
-  conv(X,w){ // コンビニ：白い平屋・青と黄色の帯・大きなガラス・ポスター・立て看板（ポールサイン）
-    const top=body(X,w,25,'#f6f6f4');F(X,top,w,8,'#ffffff');F(X,top+5.4,w,1.3,'#1e4fb0');F(X,top+6.7,w,1.1,'#f4c21a');F(X,top+7.8,w,1.3,'#1e4fb0');
-    stxt('ミナトマート',X+w/2,top+3,4.2,'#1e4fb0');
-    glass(X+2,top+10,w-5,14);F(X+w/2-5,top+10,10,14,'#3e5a72');F(X+w/2-0.3,top+10,0.6,14,'#c8ccd2');stxt('24H',X+w/2,top+12.2,2.6,'#ffffff');
-    for(const [px,c] of [[6,'#f4c21a'],[14,'#e24a3a'],[w-22,'#3aa0e0'],[w-14,'#f4c21a']]){F(X+px,top+11.5,6,8,c);F(X+px+0.8,top+12.5,4.4,3,'#ffffff');}  // 窓のポスター
-    F(X+3,132,w-6,1.2,'#d8d8d8');F(X+6,134.5,10,2.5,'#c8c8c8');F(X+w-16,134.5,10,2.5,'#c8c8c8');               // 車止め
-    F(X+w-6,96,1.6,41,'#9aa0a8');F(X+w-12,88,14,12,'#ffffff');F(X+w-12,88,14,1.2,'#1e4fb0');F(X+w-12,96.6,14,1.2,'#f4c21a');F(X+w-12,97.8,14,1.2,'#1e4fb0');stxt('MINATO',X+w-5,91.6,2.6,'#1e4fb0');stxt('MART',X+w-5,94.6,2.6,'#1e4fb0');
+  conv(X,w){ // コンビニ（緑と青の帯の店「風」）：白い平屋・帯・大きなガラス・ポスター・ポールサイン
+    const top=body(X,w,25,'#f6f6f4');F(X,top,w,8.6,'#ffffff');F(X,top+5.2,w,1.5,'#1f9a4a');F(X,top+6.7,w,0.7,'#ffffff');F(X,top+7.4,w,1.5,'#1e4fb0');
+    stxt('ハッピーマート',X+w/2,top+2.8,4,'#1e4fb0');
+    glass(X+2,top+10,w-5,14);F(X+w/2-5,top+10,10,14,'#3e5a72');F(X+w/2-0.3,top+10,0.6,14,'#c8ccd2');
+    for(const [px,c] of [[6,'#1f9a4a'],[14,'#e24a3a'],[w-22,'#3aa0e0'],[w-14,'#f4c21a']]){F(X+px,top+11.5,6,8,c);F(X+px+0.8,top+12.5,4.4,3,'#ffffff');}
+    F(X+3,132,w-6,1.2,'#d8d8d8');F(X+6,134.5,10,2.5,'#c8c8c8');F(X+w-16,134.5,10,2.5,'#c8c8c8');
+    F(X+w-6,96,1.6,41,'#9aa0a8');F(X+w-12,88,14,12,'#ffffff');F(X+w-12,88,14,0.8,'#c8ccd2');F(X+w-12,95.6,14,1.6,'#1f9a4a');F(X+w-12,97.6,14,1.6,'#1e4fb0');stxt('HAPPY',X+w-5,90.6,2.6,'#1e4fb0');stxt('MART',X+w-5,93.4,2.6,'#1f9a4a');
     bike(X+16);bike(X+24);
+  },
+  conv2(X,w){ // コンビニ（オレンジ・緑・赤の帯の店「風」）
+    const top=body(X,w,25,'#f8f8f6');F(X,top,w,8.6,'#ffffff');F(X,top+5,w,1.2,'#f08a1a');F(X,top+6.2,w,1.2,'#1f9a4a');F(X,top+7.4,w,1.2,'#e0201a');
+    stxt('サンデーマート',X+w/2,top+2.7,4,'#1f7a3a');
+    glass(X+2,top+10,w-5,14);F(X+8,top+10,10,14,'#3e5a72');F(X+12.7,top+10,0.6,14,'#c8ccd2');
+    for(const [px,c] of [[22,'#f08a1a'],[30,'#e0201a'],[w-14,'#1f9a4a']]){F(X+px,top+11.5,6,8,c);F(X+px+0.8,top+12.5,4.4,3,'#ffffff');}
+    F(X+3,132,w-6,1.2,'#d8d8d8');vend(X+w-10,'#e0201a');
+    F(X+w-16,96,1.6,41,'#9aa0a8');F(X+w-22,88,14,12,'#ffffff');F(X+w-22,88,14,0.8,'#c8ccd2');F(X+w-22,95,14,1.1,'#f08a1a');F(X+w-22,96.1,14,1.1,'#1f9a4a');F(X+w-22,97.2,14,1.1,'#e0201a');stxt('SUNDAY',X+w-15,91.6,2.4,'#1f7a3a');
   },
   ramen(X,w,r){ // ラーメン屋：黄色い大看板・赤いのれん・赤ちょうちん・袖看板・メニューの立て看板
     const top=body(X,w,36,'#e8dcc8');upWin(X+4,top+4,15,7,r());upWin(X+w-21,top+4,15,7,r());
@@ -2171,16 +2179,17 @@ const SHOPDRAW={
     {const wx=X+60;F(wx,111,26,19,'#2a6fd6');F(wx+2,114,22,16,'#26303a');F(wx,111,26,2.4,'#1a4fa0');stxt('洗車機',wx+13,112.3,2,'#ffffff');for(let k=0;k<4;k++)F(wx+4+k*5,115,1.6,15,['#e24a3a','#f2b630','#3aa0e0','#5ac05a'][k]);} // 洗車機
     for(const [tx,ty] of [[X+38,124],[X+44,124],[X+41,119.6]]){ctx.fillStyle='#1e2024';ctx.beginPath();ctx.arc(tx,ty+3,2.6,0,7);ctx.fill();ctx.fillStyle='#6a6e76';ctx.beginPath();ctx.arc(tx,ty+3,1,0,7);ctx.fill();} // タイヤの山
     F(X,135,w,2,'#8a8c92');F(X,130,w,5,'#6a6c72');
-    const cx=X+14,cw=78;F(cx,99,cw,8,'#ffffff');F(cx,99,cw,0.8,'#e8e8e8');F(cx,103.6,cw,2.2,'#e0352a');F(cx,105.8,cw,1.2,'#1f3f8a');F(cx,107,cw,1.4,'#d8dce2');
-    stxt('マリン石油',cx+cw/2,101.6,3.6,'#1f3f8a');for(let k=0;k<6;k++)F(cx+6+k*12.5,108.2,6,0.7,'#fffbe0');  // 屋根の下の照明
+    const cx=X+14,cw=78;{const g=ctx.createLinearGradient(cx,0,cx+cw,0);g.addColorStop(0,'#ffb01a');g.addColorStop(.5,'#ff6a1a');g.addColorStop(1,'#e0201a');ctx.fillStyle=g;ctx.fillRect(cx,99,cw,8);}F(cx,99,cw,0.6,'#ffd27a');F(cx,107,cw,1.4,'#d8dce2');
+    {const mx=cx+cw/2-15;ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(mx,103,3,0,7);ctx.fill();ctx.fillStyle='#ff6a1a';ctx.beginPath();ctx.arc(mx,103,2.1,0,7);ctx.fill();ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(mx+0.7,102.4,1,0,7);ctx.fill();}
+    stxt('MARINE',cx+cw/2+3,103.2,4.2,'#ffffff');for(let k=0;k<6;k++)F(cx+6+k*12.5,108.2,6,0.7,'#fffbe0');  // 屋根の下の照明
     for(const px of [cx+18,cx+cw-20]){F(px,108.4,2.2,26.6,'#e6e8ec');F(px+1.6,108.4,0.6,26.6,'#b8bcc4');}
     for(const px of [cx+6,cx+cw-32]){F(px,133,24,2,'#d8d8d8');F(px+6,121,10,12,'#e8eaee');F(px+6,121,10,1.6,'#e0352a');F(px+7.6,123.4,6.8,3.2,'#16241a');stxt('168',px+11,125,2.2,'#4aff7a','bold 2.2px monospace');
       F(px+7,127.6,3,1.2,'#f4c21a');F(px+11,127.6,3,1.2,'#e0352a');F(px+15.4,123,0.6,7,'#2a2a2a');F(px+16,124,1.4,2.4,'#2a2a2a');}
     F(cx+cw/2-8,108.6,16,5,'#ffffff');F(cx+cw/2-8,108.6,16,0.6,'#e0352a');stxt('SELF 給油',cx+cw/2,111.2,2.6,'#e0352a');
     // 事務所（洗車機の案内つき）
-    const ox=X+w-34;F(ox,113,32,24,'#f2f2f0');F(ox,113,32,1.2,'#e0352a');glass(ox+2,118,28,14);F(ox+20,118,8,14,'#3e5a72');stxt('洗車',ox+9,115.6,2.6,'#1f3f8a');stxt('オイル交換',ox+23,115.6,2.2,'#1f3f8a');
+    const ox=X+w-34;F(ox,113,32,24,'#f2f2f0');F(ox,113,32,1.2,'#ff6a1a');glass(ox+2,118,28,14);F(ox+20,118,8,14,'#3e5a72');stxt('洗車',ox+9,115.6,2.6,'#1f3f8a');stxt('オイル交換',ox+23,115.6,2.2,'#1f3f8a');
     // 価格の看板（ポールサイン）：レギュラー／ハイオク／軽油
-    const sx=X+2;F(sx+4.4,98,1.8,39,'#9aa0a8');F(sx,74,11,30,'#1a1c22');F(sx,74,11,6,'#e0352a');stxt('セルフ',sx+5.5,77.2,2.8,'#ffffff');
+    const sx=X+2;F(sx+4.4,98,1.8,39,'#9aa0a8');F(sx,74,11,30,'#1a1c22');{const g=ctx.createLinearGradient(sx,0,sx+11,0);g.addColorStop(0,'#ffb01a');g.addColorStop(1,'#e0201a');ctx.fillStyle=g;ctx.fillRect(sx,74,11,6);}stxt('セルフ',sx+5.5,77.2,2.8,'#ffffff');
     const rows=[['レギュラー','168','#e0352a'],['ハイオク','179','#f4c21a'],['軽油','148','#2aa04a']];
     rows.forEach(([n,v,c],i)=>{const y=81+i*7.4;F(sx+0.6,y,9.8,7,'#2a2c34');F(sx+0.6,y,2,7,c);stxt(n,sx+6.2,y+1.6,1.7,'#ffffff');
       ctx.shadowColor='#ff3a2a';ctx.shadowBlur=1.5;stxt(v,sx+6.4,y+4.8,3.6,'#ff4a3a','bold 3.6px "Courier New",monospace');ctx.shadowBlur=0;});
@@ -2194,9 +2203,9 @@ const SHOPDRAW={
     for(const px of [X+3,X+w-7]){F(px,132,4,5,'#8a5a3a');ctx.fillStyle='#3f8a3a';ctx.beginPath();ctx.arc(px+2,130.6,2.8,0,7);ctx.fill();}
     F(X+w/2+5,130,5,7,'#2a2a2a');F(X+w/2+5.4,130.4,4.2,4.4,'#2a3a30');stxt('OPEN',X+w/2+7.5,131.5,1.4,'#ffffff');F(X+w/2+6,133.4,3,0.4,'#f2b630');
   },
-  drug(X,w,r){ // ドラッグストア：白い大看板に赤い「くすり」・黄色い値札・店先のワゴン・のぼり
-    const top=body(X,w,30,'#f4f4f2');F(X,top+1.2,w,10,'#ffffff');stxt('くすり',X+20,top+6.4,7,'#e0201a');stxt('ドラッグ ミナト',X+w-20,top+4.6,3,'#1a8a3a');stxt('化粧品・日用品',X+w-20,top+8.6,2.6,'#555555');F(X,top+11,w,1.2,'#1a8a3a');
-    glass(X+2,top+13,w-5,17);for(let k=0;k<5;k++){F(X+6+k*13,top+14.5,9,4.4,'#f4d21a');stxt(['SALE','特価','10%','OFF','2割'][k],X+10.5+k*13,top+16.8,2.2,'#e0201a');}
+  drug(X,w,r){ // ドラッグストア（黄色い看板に青い字の店「風」）・値札・ワゴン・のぼり
+    const top=body(X,w,30,'#f4f4f2');F(X,top+1.2,w,10,'#ffe100');F(X,top+1.2,w,0.6,'#fff27a');stxt('ドラッグ',X+15,top+6.4,4.2,'#1a3c9a');stxt('ミナト',X+w-22,top+6.2,6,'#1a3c9a');F(X,top+11,w,1.2,'#1a3c9a');
+    glass(X+2,top+13,w-5,17);for(let k=0;k<5;k++){F(X+6+k*13,top+14.5,9,4.4,'#ffe100');stxt(['SALE','特価','10%','OFF','2割'][k],X+10.5+k*13,top+16.8,2.2,'#e0201a');}
     F(X+w/2-6,top+13,12,17,'#3e5a72');F(X+w/2-0.3,top+13,0.6,17,'#c8ccd2');
     for(const px of [X+5,X+w-19]){F(px,129,14,8,'#e8eaee');F(px,129,14,1,'#b8bcc4');for(let k=0;k<6;k++)F(px+1+k*2.2,126.6,1.7,2.4,['#f2b630','#e24a3a','#3aa0e0','#5ac05a','#f2f2f2','#c060c0'][k]);}
     nobori(X+22,'大特価','#e0201a','#ffffff');
@@ -2213,9 +2222,13 @@ const SHOPDRAW={
     glass(X+3,top+22,w-6,14);for(let k=0;k<3;k++)for(let j=0;j<6;j++)F(X+5+j*6.5,top+23.5+k*4,5,3.4,['#e24a3a','#3aa0e0','#f2b630','#5ac05a','#f2f2f2','#c060c0','#ff8a3a'][(k*2+j)%7]);
     F(X+6,128,16,9,'#8a6a4a');for(let k=0;k<3;k++)for(let j=0;j<5;j++)F(X+6.6+j*3.1,128.6+k*2.8,2.6,2.2,['#e24a3a','#3aa0e0','#f2b630','#f2f2f2','#5ac05a'][(j+k)%5]);
   },
+  gyudon(X,w,r){ // 牛丼屋（オレンジの看板に黒い字の店「風」）
+    const top=body(X,w,24,'#f6f2ea');F(X,top+1.2,w,9,'#f08a1a');F(X,top+1.2,w,0.6,'#ffc27a');stxt('牛丼',X+11,top+5.8,5.4,'#1a1a1a');stxt('はやや',X+w-14,top+5.8,4.4,'#1a1a1a',MFONT);
+    glass(X+2,top+11,w-5,13);F(X+w-14,top+11,8,13,'#3e5a72');F(X+4,top+12,14,5,'#ffffff');stxt('並 400円',X+11,top+14.6,2.2,'#e0201a');
+  },
   bento(X,w,r){ // 弁当屋：オレンジの看板・メニュー写真・持ち帰りの窓口
     const top=body(X,w,32,'#f2e8da');upWin(X+5,top+4,w-12,7,r());
-    F(X+1,top+13,w-2,7,'#ff8a1a');stxt('お弁当 ほかほか亭',X+w/2,top+16.6,3,'#ffffff');F(X+1,top+19.6,w-2,0.8,'#c85a00');
+    F(X+1,top+13,w-2,7,'#e0201a');F(X+1,top+13,w-2,1.4,'#ffb01a');stxt('ほかほか弁当',X+w/2,top+17,3.2,'#ffffff');F(X+1,top+19.6,w-2,0.8,'#ffb01a');
     for(let k=0;k<3;k++){F(X+4+k*11.6,top+21.5,10,6,'#ffffff');F(X+4.6+k*11.6,top+22,8.8,3.6,['#c8782a','#e8b84a','#a84a2a'][k]);stxt(['から揚','のり弁','焼肉'][k],X+9+k*11.6,top+26.6,1.6,'#333');}
     glass(X+3,top+28,w-6,4);F(X+3,132,w-6,5,'#d8d0c4');
   },
@@ -2334,6 +2347,58 @@ function mmBay(b){
   // 海ぎわの公園の木
   for(let k=0;k<8;k++){ctx.fillStyle='#4f8a4a';ctx.beginPath();ctx.arc(b+500+k*22,105,3.4,0,7);ctx.fill();}
 }
+
+// ---------- 区間ごとの名物（実際の景色に寄せる） ----------
+function jcastle(x,base,s,roof='#4a5260',wall='#f4f2ec'){ // 天守（白い壁・灰色の屋根・石垣）
+  ctx.save();ctx.translate(x,base);ctx.scale(s,s);
+  poly([[-14,0],[-11,-7],[11,-7],[14,0]],'#8a8478');for(let k=-12;k<12;k+=3)F(k,-6,2.6,0.4,'#6e685e');
+  const tier=(y,w,h)=>{F(-w/2,y-h,w,h,wall);F(w/2-1.6,y-h,1.6,h,shade(wall,-24));for(let k=-w/2+2;k<w/2-2;k+=3)F(k,y-h+h*0.35,1.2,h*0.3,'#3a3e46');
+    poly([[-w/2-3,y-h+0.5],[-w/2+1,y-h-2.4],[w/2-1,y-h-2.4],[w/2+3,y-h+0.5]],roof);F(-w/2-3,y-h+0.2,w+6,0.6,shade(roof,-20));};
+  tier(-7,20,6);tier(-15.4,15,5.4);tier(-23.2,10,5);
+  poly([[-4,-28.4],[0,-31.8],[4,-28.4]],roof);F(-5,-28.6,10,0.6,shade(roof,-20));F(-3.6,-30.6,1,1.4,'#d8b04a');F(2.6,-30.6,1,1.4,'#d8b04a');
+  ctx.restore();
+}
+function hillTown(off,base,seed,span=360){ // 横浜の丘にびっしり並ぶ家と団地
+  const r=seeded(seed),P=[];for(let x=0;x<=span;x+=4)P.push(base-14-10*Math.sin(x/span*6.283*2+seed)-5*Math.sin(x/span*6.283*5));
+  const Hs=[];for(let x=0;x<span;x+=5+r()*3){Hs.push([x,4+r()*3,3+r()*2,pick2(r,['#efe6d6','#e4ddd2','#d9d4cc','#f2efe8','#e8e0e8']),pick2(r,['#7a3b2e','#3d4a5e','#5a5a62','#2f5a4a','#8a6a4a'])]);}
+  const Dn=[];for(let x=20;x<span;x+=60+r()*40)Dn.push([x,18+r()*12,8+r()*4]);
+  tile(off,span,b=>{ctx.fillStyle='#7a9a66';ctx.beginPath();ctx.moveTo(b,base+20);P.forEach((y,i)=>ctx.lineTo(b+i*4,y));ctx.lineTo(b+span,base+20);ctx.fill();
+    for(const [x,w,h,wc,rc] of Hs){const y=P[Math.min(P.length-1,(x/4)|0)];for(let row=0;row<3;row++){const yy=y+2+row*5.5;if(yy>base+2)break;const X=b+x+row*2;
+      F(X,yy,w,h,wc);poly([[X-0.6,yy],[X+w/2,yy-2],[X+w+0.6,yy]],rc);F(X+1,yy+1,1,1,'#8fb2cc');}}
+    for(const [x,w,h] of Dn){const y=P[Math.min(P.length-1,(x/4)|0)]+2,X=b+x;F(X,y-h,w,h,'#e8e4da');F(X+w-1.4,y-h,1.4,h,'#c8c2b4');for(let yy=y-h+1.4;yy<y-1;yy+=2.2)F(X+0.8,yy,w-2.6,0.7,'#9aa8b4');stxt(String(1+(x|0)%9),X+w/2,y-h+1.6,1.6,'#6a7480');}});
+}
+function trainJR(off,base,len,body,stripe,speed,span=1100){ // 走る電車（off は背景のずれ。速さは G.time で）
+  const x=((G.time*speed-off)%span+span)%span-300;for(let k=0;k<len;k++){const cx=x+k*17;if(cx<-20||cx>330)continue;F(cx,base-6,16.4,6,body);F(cx,base-3.4,16.4,1,stripe);for(let j=0;j<4;j++)F(cx+1.4+j*3.8,base-5,2.4,1.6,'#3a4a60');F(cx+2,base,3,1,'#2a2a2a');F(cx+11,base,3,1,'#2a2a2a');}
+  F(x+7,base-7.4,1.6,1.4,'#3a3e46');}
+function frostFans(off,base,seed){ // 茶畑の防霜ファン（細い柱の上に小さな扇風機）
+  const r=seeded(seed),Pp=[];for(let x=0;x<300;x+=14+r()*16)Pp.push([x,r()*6]);
+  tile(off,300,b=>{for(const [x,dy] of Pp){const X=b+x,y=base-dy;F(X,y-10,0.6,10,'#8a9098');F(X-0.6,y-11,1.8,1.2,'#5a5e66');F(X+1.1,y-12,0.5,3,'#9aa0a8');}});
+}
+function greenhouses(off,base,seed){ // ビニールハウス（白いかまぼこ形が並ぶ）
+  tile(off,260,b=>{for(let k=0;k<5;k++){const X=b+20+k*14+(k>2?60:0);ctx.fillStyle='#e8f0f2';ctx.strokeStyle='#8a9aa2';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(X,base);ctx.lineTo(X,base-3);ctx.quadraticCurveTo(X+6,base-9,X+12,base-3);ctx.lineTo(X+12,base);ctx.closePath();ctx.fill();ctx.stroke();F(X+4.5,base-3,3,3,'#9ab0b8');
+    ctx.strokeStyle='rgba(160,170,176,.6)';ctx.lineWidth=0.3;for(let j=2;j<12;j+=2.5){ctx.beginPath();ctx.moveTo(X+j,base);ctx.lineTo(X+j,base-5);ctx.stroke();}}});
+}
+function torii(x,base,s){ctx.save();ctx.translate(x,base);ctx.scale(s,s);const c='#e0301e';F(-6,-14,1.6,14,c);F(4.4,-14,1.6,14,c);F(-8,-15.6,16,1.6,c);F(-7,-13,14,1,c);poly([[-9,-15.6],[-8,-17],[8,-17],[9,-15.6]],'#2a2a2a');ctx.restore();}
+function noriPoles(off,y0,y1){tile(off,120,b=>{const r=seeded(77);for(let i=0;i<26;i++){const x=b+r()*120,y=y0+r()*(y1-y0);F(x,y-3,0.4,3,'rgba(50,50,40,.7)');}});}
+function actTower(x,base){ // 浜松のハーモニカ形のタワー（上が斜めにまるく切れる）
+  ctx.fillStyle='#c4ced8';ctx.beginPath();ctx.moveTo(x,base);ctx.lineTo(x,40);ctx.quadraticCurveTo(x+6,30,x+22,34);ctx.lineTo(x+22,base);ctx.fill();
+  F(x+15,36,7,base-36,'#a2aebc');for(let y=44;y<base-2;y+=3)F(x+2,y,12,0.7,'#8a9aae');for(let k=0;k<4;k++)F(x+3+k*3,38+k*0.4,1.4,4,'#8a9aae');
+  F(x-16,base-12,54,12,'#d0d6de');for(let k=0;k<12;k++)F(x-14+k*4.4,base-9,3,1.4,'#8a9ab0');}
+function spiralTower(x,base,h){ // 名古屋駅前のねじれたタワー
+  for(let y=0;y<h;y+=1.2){const t=y/h,w=12*(1-t*0.55),dx=Math.sin(t*9)*1.4;F(x-w/2+dx,base-y-1.2,w,1.3,((y/1.2)|0)%3?'#c8d4e0':'#9aaabb');}
+  F(x-0.3,base-h-5,0.6,5,'#9aa4b2');}
+function tvTower(x,base){ // 名古屋のテレビ塔（鉄骨・展望台）
+  ctx.strokeStyle='#8a929c';ctx.lineWidth=0.6;ctx.beginPath();ctx.moveTo(x-9,base);ctx.lineTo(x-2,base-34);ctx.moveTo(x+9,base);ctx.lineTo(x+2,base-34);
+  for(let y=4;y<34;y+=4){const w=9-y*0.2;ctx.moveTo(x-w,base-y);ctx.lineTo(x+w-0.6,base-y-4);ctx.moveTo(x+w,base-y);ctx.lineTo(x-w+0.6,base-y-4);}ctx.stroke();
+  F(x-5,base-24,10,3,'#c8ccd2');F(x-4,base-38,8,4,'#d8dce2');F(x-0.4,base-48,0.8,10,'#9aa0aa');F(x-3,base-30,6,1,'#c8ccd2');}
+function stadiumT(x,base){ // 豊田スタジアム風：4本の白い柱とつり屋根
+  ctx.fillStyle='#d8dde4';ctx.beginPath();ctx.ellipse(x,base-6,30,7,0,0,7);ctx.fill();F(x-30,base-6,60,6,'#cfd5dc');ctx.fillStyle='#b8c0ca';ctx.beginPath();ctx.ellipse(x,base-8,24,4,0,0,7);ctx.fill();
+  ctx.strokeStyle='rgba(240,244,248,.9)';ctx.lineWidth=0.35;for(const mx of [x-22,x+22]){F(mx-1,base-40,2,34,'#f2f4f8');for(let k=0;k<6;k++){ctx.beginPath();ctx.moveTo(mx,base-40);ctx.lineTo(x+(mx<x?-1:1)*(k*3.6),base-10);ctx.stroke();}}}
+function nagoyaTwin(x,base){ // 名古屋駅の高いビル群（円い塔の双子・四角い高層・ねじれた塔）
+  ctx.fillStyle='#b8c2ce';ctx.beginPath();ctx.ellipse(x+6,base-60,6,2,0,0,7);ctx.fill();F(x,base-60,12,60,'#b8c2ce');F(x+8,base-60,4,60,'#98a4b4');for(let y=base-56;y<base;y+=2.4)F(x+1,y,9,0.6,'#8a9aae');
+  F(x+14,base-54,12,54,'#c2ccd8');F(x+22,base-54,4,54,'#9eaaba');for(let y=base-50;y<base;y+=2.4)F(x+15,y,9,0.6,'#8a9aae');
+  F(x+30,base-70,14,70,'#c8d2de');poly([[x+30,base-70],[x+37,base-74],[x+44,base-70]],'#aab6c4');F(x+40,base-70,4,70,'#a2aec0');for(let y=base-66;y<base;y+=2.4)F(x+31,y,10,0.6,'#8a9aae');
+  spiralTower(x+54,base,58);}
 const BGS={
   yokohama(o){
     skyC(['#78b2e8','#b6dbf6','#eaf5fb']);sunNo(262,28,8,'#fffbe0','rgba(255,250,210,.5)');
@@ -2679,6 +2744,172 @@ Object.assign(BGS,{
   },
 });
 
+// v43：区間ごとの背景を実際の景色に寄せて描き直し
+Object.assign(BGS,{
+  bypass(o){ // 環状2号線：横浜の丘にびっしり並ぶ家と団地、遠くにみなとみらい
+    skyC();cloudC();
+    tile(o*0.03,900,b=>{const x=b+60;poly([[x,104],[x+2,76],[x+9,76],[x+11,104]],'#b8c4d2');F(x+2,74,7,2,'#aab6c4');F(x+20,90,6,14,'#b4c0ce');F(x+28,94,5,10,'#b4c0ce');}); // 遠くのランドマークタワー
+    ridge(o*0.03,110,14,'#9db8c8',21,600);
+    hillTown(o*0.1,118,24,420);
+    hillTown(o*0.22,130,25,360);
+    trees(o*0.55,160,135,'#4a8a45',6,0.8);
+  },
+  machida(o){ // 横浜町田〜海老名：住宅地と高いマンション、遠くに丹沢と大山
+    skyC();cloudC();
+    ridge(o*0.015,104,30,'#9fb4cc',71);
+    tile(o*0.015,640,b=>{const x=b+240;ctx.fillStyle='#8ea6c2';ctx.beginPath();ctx.moveTo(x-60,106);ctx.quadraticCurveTo(x-20,90,x-6,66);ctx.lineTo(x,63);ctx.lineTo(x+6,66);ctx.quadraticCurveTo(x+22,92,x+64,106);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.08)';ctx.beginPath();ctx.moveTo(x-60,106);ctx.quadraticCurveTo(x-20,90,x-6,66);ctx.lineTo(x,63);ctx.lineTo(x-2,106);ctx.fill();}); // 大山（すそが広がる三角）
+    haze(88,118,'rgba(225,236,246,.5)');
+    tile(o*0.12,520,b=>{for(const [x,h] of [[80,44],[96,38],[300,40]]){F(b+x,120-h,12,h,'#e6e2da');F(b+x+9,120-h,3,h,'#c8c2b6');for(let y=122-h;y<118;y+=2.4)F(b+x+1,y,7.6,0.8,'#9ab0c2');}}); // 海老名の高いマンション
+    town(o*0.14,120,72,16,380);
+    town(o*0.3,128,73,22,320);
+    houses(o*0.45,260,134,74);
+    trees(o*0.65,200,135,'#4f8a4a',75,0.6);
+  },
+  hadano(o){ // 秦野：盆地の街、すぐそばの丹沢、小田急線
+    skyC();cloudC();
+    ridge(o*0.02,96,58,'#7f9cb8',81,640,true);
+    ridge(o*0.05,110,30,'#5f8a6a',82,520,true);
+    haze(96,122,'rgba(220,234,244,.45)');
+    town(o*0.18,124,83,12,360);
+    F(0,124,320,2,'#c8ccd2');tile(o*0.18,36,b=>F(b+10,126,1.6,6,'#b0b6be'));trainJR(o*0.18,124,8,'#e8ecf0','#2a56b8',2.6);  // 高架の小田急線
+    forestHills(o*0.4,132,10,'#4f8a48',84);
+    tile(o*0.3,330,b=>pylon(b+200,126,46));
+  },
+  matsuda(o){ // 大井松田〜足柄：酒匂川の谷・両側の山・御殿場線
+    skyC();cloudC();
+    ridge(o*0.03,92,64,'#6f8fa8',91,640,true);
+    ridge(o*0.08,108,46,'#4f7a58',92,520,true);
+    F(0,116,320,8,'#b8b4a8');tile(o*0.12,200,b=>{ctx.fillStyle='#5a9ac8';ctx.beginPath();ctx.moveTo(b,121);ctx.quadraticCurveTo(b+50,117,b+100,120);ctx.quadraticCurveTo(b+150,123,b+200,121);ctx.lineTo(b+200,123);ctx.lineTo(b,123);ctx.fill();}); // 酒匂川の河原
+    ridge(o*0.16,124,22,'#3f6c46',93,400,true);
+    F(0,124,320,1.2,'#8a8478');trainJR(o*0.16,124,4,'#e8ecf0','#f08a1a',-2.2,900);   // 御殿場線
+    forestHills(o*0.5,134,8,'#3f7a3c',94);
+  },
+  fuji(o,lo){ // 足柄・御殿場：大きな富士山・左に箱根の山（金時山）・高原の街
+    skyC();cloudC();
+    fujiSan(205-lo*0.02,132,1.05);
+    tile(o*0.02,800,b=>{ctx.fillStyle='#7f98b4';ctx.beginPath();ctx.moveTo(b-20,124);ctx.quadraticCurveTo(b+20,104,b+40,96);ctx.lineTo(b+46,90);ctx.lineTo(b+52,96);ctx.quadraticCurveTo(b+80,106,b+130,124);ctx.fill();}); // 金時山
+    haze(86,132,'rgba(220,235,250,.45)');
+    ridge(o*0.06,124,14,'#5e8a5a',101,520,true);
+    F(0,124,320,11,'#8fb366');
+    town(o*0.3,130,102,8,360,['#e8e2d6','#d4d9de']);
+    trees(o*0.5,150,135,'#3f7a3c',103,1.2);
+  },
+  yui(o){ // 由比：すぐ下に国道1号と東海道線、その向こうが駿河湾。右に薩埵峠の山
+    skyC();cloudC();
+    ridge(o*0.01,100,12,'#9cb0c8',131,700);
+    seaBand(100,120,'#2f7fc0',o*0.3);
+    const g=ctx.createLinearGradient(0,100,0,120);g.addColorStop(0,'rgba(255,255,255,.15)');g.addColorStop(1,'rgba(0,40,90,.2)');ctx.fillStyle=g;ctx.fillRect(0,100,320,20);
+    tile(o*0.05,700,b=>{ctx.fillStyle='#5f8a5a';ctx.beginPath();ctx.moveTo(b+220,121);ctx.quadraticCurveTo(b+260,82,b+330,90);ctx.lineTo(b+420,121);ctx.fill();}); // 薩埵峠
+    tile(o*0.8,24,b=>{ctx.fillStyle='#b8bcc2';ctx.beginPath();ctx.moveTo(b,121);ctx.lineTo(b+5,116.5);ctx.lineTo(b+12,118);ctx.lineTo(b+18,116);ctx.lineTo(b+24,121);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillRect(b+2+((G.time/6+b)|0)%10,116,6,1);});
+    F(0,120.5,320,3,'#7a7c82');F(0,121.8,320,0.4,'#e8e8e0');                          // 国道1号
+    F(0,123.5,320,4.5,'#8a8478');F(0,125.6,320,0.5,'#5a5a5e');trainJR(o*0.8,126.6,10,'#e8ecf0','#f08a1a',-3.2,700); // 東海道線
+  },
+  shimizu(o){ // 清水：港のクレーン・船、うしろに富士山、三保の松原
+    skyC();cloudC();
+    fujiSan(250-o*0.004%640,104,0.7,true);
+    ridge(o*0.01,104,10,'#a0b4c8',141,700);
+    seaBand(104,124,'#3a80bc',o*0.2);
+    tile(o*0.12,600,b=>{for(let x=b+330;x<b+480;x+=4){ctx.fillStyle='#2f5a36';ctx.beginPath();ctx.arc(x,105,2.4,Math.PI,0);ctx.fill();F(x-0.3,105,0.6,1.6,'#5a4030');}}); // 三保の松原
+    tile(o*0.2,420,b=>{crane(b+30,124,'#d8483b');crane(b+80,124,'#d8483b');crane(b+130,124,'#e8e8ea');
+      rect(b+190,114,90,10,'#2a3a5a');rect(b+190,112,90,2,'#c8202a');for(let k=0;k<8;k++)rect(b+196+k*10,106,9,6,['#d8483b','#3a7ad8','#e8a020','#4a9a5a'][k%4]);
+      rect(b+262,98,14,8,'#f2f2f2');});
+    forestHills(o*0.35,128,7,'#4f8a48',142);
+    town(o*0.45,132,143,10,320);
+  },
+  shizuokaCity(o){ // 静岡：うしろの山と日本平、街の高いビル
+    skyC();cloudC();
+    ridge(o*0.03,104,30,'#6f8fa8',151,600,true);
+    forestHills(o*0.08,112,16,'#5a8a5a',152);
+    tile(o*0.08,560,b=>{F(b+200,72,1,40,'#9aa0aa');F(b+196,78,9,2,'#c8ccd2');}); // 日本平の電波塔
+    skyline(o*0.16,380,153,124,12,44,['#d8d4cc','#c4ccd4','#e4ded4','#b8c0ca'],0.08);
+    town(o*0.36,132,154,16,320);
+  },
+  yaizu(o){ // 焼津・大井川：雪の南アルプス・広い大井川の河原と田んぼ
+    skyC();cloudC();
+    ridge(o*0.015,98,40,'#a6b8d0',161,700);ridge(o*0.015,98,12,'#f2f6fa',161,700);
+    ridge(o*0.04,112,22,'#6f8fa8',162,600,true);
+    F(0,112,320,8,'#c8c2b2');tile(o*0.15,240,b=>{for(const [x,w] of [[0,70],[90,50],[160,80]]){ctx.fillStyle='#5a9ac8';ctx.beginPath();ctx.ellipse(b+x+w/2,116,w/2,1.6,0,0,7);ctx.fill();}}); // 大井川の水すじ
+    rect(0,120,320,15,'#a8c070');for(let x=-(o*0.3%12);x<320;x+=12)rect(x,123,8,1,'#90aa5c');
+    town(o*0.25,126,163,12,360);
+    tile(o*0.5,260,b=>{rect(b+40,124,1,11,'#7d8394');rect(b+36,120,9,1,'#7d8394');});
+  },
+  makinohara(o){ // 牧之原：台地いちめんの茶畑と防霜ファン、遠くに富士山
+    skyC();cloudC();
+    fujiSan(240-o*0.004%640,106,0.5,true);
+    ridge(o*0.02,104,22,'#9ab0c8',231,700);
+    teaField(o*0.12,124,232);frostFans(o*0.12,120,234);teaField(o*0.3,136,233);frostFans(o*0.3,132,235);
+  },
+  kakegawa(o){ // 掛川：丘の上の掛川城・茶畑・新幹線
+    skyC();cloudC();
+    ridge(o*0.03,108,22,'#7f9cb4',171,600,true);
+    forestHills(o*0.08,118,16,'#5a8a52',172);
+    tile(o*0.08,600,b=>{ctx.fillStyle='#4f8a48';ctx.beginPath();ctx.ellipse(b+180,110,26,8,0,Math.PI,0);ctx.fill();jcastle(b+180,104,1);});
+    shinkansen(o*0.2,108,4.2);
+    teaField(o*0.3,135,173);frostFans(o*0.3,131,174);
+  },
+  hamamatsu(o){ // 浜松：ハーモニカ形のタワーと街・工場
+    skyC();cloudC();
+    skyline(o*0.12,400,181,118,12,40,['#c8ccd4','#d8d4cc','#b8c2cc'],0.08);
+    tile(o*0.12,700,b=>actTower(b+200,118));
+    tile(o*0.28,380,b=>{factory(b+20,128,80,14,'#d4d8dc');factory(b+180,128,60,12,'#cfcac2');chimney(b+60,114,26);});
+    town(o*0.42,132,183,12,320);
+  },
+  hamana(o){ // 浜名湖：湖の中の赤い鳥居（弁天島）・海苔のひび・ヨット・長い橋
+    skyC();cloudC();
+    mountains(o*0.03,104,14,'#9ab4c8',51,420,5);
+    seaBand(102,135,'#4a8fc4',o*0.15);
+    noriPoles(o*0.3,112,132);
+    tile(o*0.2,360,b=>{rect(b,110,360,2,'#e8edf3');rect(b,112,360,1,'#9aa6b4');
+      for(let x=b+10;x<b+360;x+=30){rect(x,113,2,10,'#c9d2dc');}
+      ctx.strokeStyle='#e8edf3';ctx.lineWidth=1;for(let x=b+40;x<b+360;x+=120){ctx.beginPath();ctx.moveTo(x,110);ctx.quadraticCurveTo(x+30,92,x+60,110);ctx.stroke();}});
+    tile(o*0.35,600,b=>{torii(b+120,126,1.2);F(b+108,126,26,1,'rgba(255,255,255,.5)');
+      for(const x of [b+300,b+420]){poly([[x,124],[x+10,124],[x+8,126],[x+2,126]],'#ffffff');poly([[x+5,111],[x+5,123],[x+11,123]],'#f4f4f4');F(x+4.6,110,0.6,14,'#8a8a8a');}}); // ヨット
+    tile(o*0.6,150,b=>{for(let i=0;i<2;i++){const x=b+20+i*60;rect(x,120,1.5,15,'#6b4a2a');ctx.fillStyle='#2f5f3a';ctx.beginPath();ctx.ellipse(x+1,119,9,3.5,0,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(x-2,124,6,2.5,0,0,7);ctx.fill();}});
+  },
+  mikkabi(o){ // 三ヶ日：みかん畑の丘と浜名湖の奥（猪鼻湖）
+    skyC();cloudC();
+    ridge(o*0.04,110,20,'#6f8fa8',191,600,true);
+    seaBand(108,124,'#4a8fc4',o*0.15);noriPoles(o*0.15,112,123);
+    mikan(o*0.25,135);
+  },
+  toyokawa(o){ // 豊川：本宮山・平野のビニールハウス・新幹線
+    skyC();cloudC();
+    ridge(o*0.03,106,28,'#7f98b0',201,600,true);
+    rect(0,112,320,23,'#a4bf6e');for(let x=-(o*0.3%14);x<320;x+=14)rect(x,116,10,1,'#8eaa5c');
+    shinkansen(o*0.22,110,-4.6);
+    town(o*0.36,122,202,12,320);
+    F(0,121,320,7,'#8aa65a');greenhouses(o*0.45,127.5,203);
+  },
+  okazaki(o){ // 岡崎：丘陵と岡崎城・矢作川・街
+    skyC();cloudC();
+    forestHills(o*0.06,112,20,'#6a9064',211);
+    tile(o*0.12,380,b=>{ctx.fillStyle='#5a8a52';ctx.beginPath();ctx.ellipse(b+140,114,24,8,0,Math.PI,0);ctx.fill();jcastle(b+140,109,0.85);});
+    town(o*0.18,124,212,22,380);
+    F(0,123.5,320,4.5,'#b8b4a8');F(0,124.5,320,2.4,'#5a9ac8');                                // 矢作川
+    forestHills(o*0.35,132,8,'#4f8a48',213);
+    tile(o*0.3,320,b=>pylon(b+90,126,44));
+  },
+  toyota(o){ // 豊田：白い柱のスタジアム・大きな自動車工場（どこかの会社ではない）・鉄塔
+    skyC();cloudC();
+    ridge(o*0.03,108,18,'#8a9cb0',221,600);
+    tile(o*0.1,700,b=>stadiumT(b+500,116));
+    tile(o*0.2,460,b=>{factory(b+10,124,120,18,'#eceef0');factory(b+150,124,90,14,'#e2e4e6');rect(b+250,96,12,28,'#d8dade');chimney(b+252,96,0);
+      rect(b+300,118,60,6,'#3a3d44');for(let k=0;k<7;k++)rect(b+302+k*8,114,6,4,['#f4f4f4','#2a2a30','#c8202a','#b8bec8'][k%4]);});
+    tile(o*0.35,300,b=>pylon(b+60,128,48));
+    town(o*0.45,132,222,10,320);
+  },
+  nagoya(o,lo){ // 名古屋：夕焼け・名古屋駅の高いビル群・テレビ塔・名古屋城
+    skyC();cloudC();
+    skyline(o*0.12,380,13,112,14,40,['#b7a6a0','#a8a0a8','#c4b4a8'],0.12);
+    nagoyaTwin(60-lo*0.04,122);
+    tvTower(160-lo*0.045,122);
+    castleNagoya(250-lo*0.05,121,0.95);
+    skyline(o*0.4,300,14,135,10,24,['#d6c8bc','#c9c2c8','#e0d6cc','#b8b0b8'],0.2);
+  },
+});
+
 const SKY_TBL={yokohama:['#78b2e8','#b6dbf6','#eaf5fb'],bypass:['#7fb6ea','#b9dcf5','#eef6fb'],tanzawa:['#6fa8e2','#b4d6f2','#eef4f8'],fuji:['#5f9fe0','#aed2f2','#eaf2fa'],shizuoka:['#6aa8e6','#b2d6f4','#eef5fb'],hamana:['#6fb0ea','#bfe0f7','#f2f8fc'],aichi:['#7fb0e0','#c2dcf0','#f4f1e6'],nagoya:['#e8a86a','#f4cf98','#fbe9c8'],machida:['#6fa8e2','#b4d6f2','#eef4f8'],hadano:['#6aa6e0','#b2d4f0','#eef4f8'],matsuda:['#6aa6e0','#aed2ee','#e8f2f8'],numazu:['#62a2e2','#b0d4f2','#eef5fb'],fujicity:['#66a6e4','#b4d6f4','#f0f5fa'],yui:['#5ea6e8','#b8dcf6','#f2f8fc'],shimizu:['#62a4e4','#b4d8f4','#f0f6fb'],shizuokaCity:['#66a8e6','#b6d8f4','#f0f6fb'],yaizu:['#66a8e6','#b8daf4','#f0f6fb'],makinohara:['#66a8e6','#b8daf4','#f0f6fb'],kakegawa:['#66a8e6','#b6d8f2','#eef6fb'],hamamatsu:['#6aaae6','#bcdcf4','#f2f7fb'],mikkabi:['#66a8e6','#b8daf4','#f0f6fb'],toyokawa:['#6aaae6','#bcdcf4','#f4f6f0'],okazaki:['#70aae2','#c0dcf0','#f6f2e8'],toyota:['#78ace0','#c8dcec','#f8eedc']};
 // 空・太陽・雲は道のり全体でつなぐ（区間の境目の前後4kmで色をなめらかに混ぜる）
 function lerpHex(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`;}
@@ -2931,8 +3162,8 @@ function greenSign(x,y,w,h,lines){
   lines.forEach((s,i)=>txt(s,x+w/2,y+12+i*14,11,'#ffffff','center'));
 }
 function drawRoadside(){
-  // 本村ICの案内
-  {const x=kmX(HONMURA_KM);if(x>-160&&x<W+20)icSign(x,58,'東名高速','Tomei Expwy','本村IC 入口','up');}
+  // 新桜ヶ丘ICの案内
+  {const x=kmX(HONMURA_KM);if(x>-160&&x<W+20)icSign(x,58,'東名高速','Tomei Expwy','新桜ヶ丘IC 入口','up');}
   // 料金所（屋根・ブース・ETCの表示）
   {const x=kmX(TOLL_KM+0.4)-60;if(x>-260&&x<W+40){
     rect(x,88,200,16,'#f2f4f6');rect(x,104,200,3,'#b9bec6');rect(x,88,200,2,'#dfe3e8');
@@ -3411,6 +3642,7 @@ function draw(){
   if(G.mode==='cars1'||G.mode==='cars2'||G.mode==='cars3'){drawCarSheet(G.mode==='cars1'?1:G.mode==='cars2'?2:3);return;}
   if(/^cmp\d$/.test(G.mode)){drawCompare(+G.mode.slice(3));return;}
   if(G.mode==='tornsheet'){drawTornSheet();return;}
+  if(G.mode==='bgview'){const c=snapScene();if(c)ctx.drawImage(c,0,0,W,H);return;}
   ctx.save();
   if(G.shake>0)ctx.translate(rnd(-2,2),rnd(-2,2));
   else if(G.mode==='play'&&G.v>160&&G.caught<=0){const a=Math.min(1,(G.v-160)/60);ctx.translate(rnd(-0.7,0.7)*a,rnd(-0.7,0.7)*a);} // 速いと少し揺れる
@@ -3473,6 +3705,7 @@ function debugShot(name){
   newGame();
   if(name==='cars1'||name==='cars2'||name==='cars3'||/^cmp\d$/.test(name)){G.mode=name;G.freeze=true;return;}
   if(name==='tornsheet'){G.mode='tornsheet';G.freeze=true;return;}
+  if(/^bg_/.test(name)){const m=/^bg_([a-zA-Z]+)([\d.]*)$/.exec(name),sc=SECTIONS.find(x=>x.bg===m[1]);G.km=sc.km+(m[2]?+m[2]:3);G.time=900;G.mode='bgview';G.freeze=true;return;}
   if(name==='title'||name==='title2'||name==='title3'){G.mode='title';G.time=name==='title'?44:name==='title3'?300:150;G.km=name==='title'?0:100;G.freeze=true;return;}
   if(/^intro/.test(name)){const n={intro:30,intro2:260,intro3:450,intro4:300,intro5:322,intro6:447,intro7:520}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
   for(let i=0;i<540;i++)update();
