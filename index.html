@@ -630,7 +630,7 @@ function star(cx,cy,col){
   ctx.beginPath();P.forEach((p,i)=>{const X=cx+p[0]*2,Y=cy+p[1]*2;i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);});ctx.closePath();
   ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#16121e';ctx.lineWidth=1.2;ctx.stroke();
 }
-function drawSay(p,s){ // いもっちの吹き出し
+function drawSay(p,s,col){ // いもっちの吹き出し（col＝文字の色。よしちゃんはピンク）
   ctx.font='bold 11px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';
   const w=Math.ceil(ctx.measureText(s).width)+12,h=18;
   let x=Math.round(p.x+CW/2-w/2),y=Math.round(p.y-h-8);
@@ -640,7 +640,7 @@ function drawSay(p,s){ // いもっちの吹き出し
   const tx=Math.max(x+6,Math.min(x+w-10,Math.round(p.x+CW/2)));
   ctx.fillStyle='#16121e';ctx.fillRect(tx-1,y+h,7,2);ctx.fillRect(tx,y+h+2,4,2);ctx.fillRect(tx+1,y+h+4,2,2);
   ctx.fillStyle='#ffffff';ctx.fillRect(tx,y+h,5,1);ctx.fillRect(tx+1,y+h+1,3,2);
-  ctx.fillStyle='#1f44e6';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s,x+w/2,y+h/2+1);
+  ctx.fillStyle=col||'#1f44e6';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s,x+w/2,y+h/2+1);
 }
 
 // ---------- 1作目から：いもっちの家とメロンテニスクラブの住宅街（2作目のスタート地点。車庫の車は外に出ているので消した） ----------
@@ -2102,7 +2102,7 @@ function drawYoshi(){
   const spr=y.walk>0?YOSHI.walk[((y.walk/5)|0)%8]:(G.mode==='intro'&&G.introT-230>20&&G.introT-230<70?YOSHI.wave:YOSHI.idle);
   ctx.globalAlpha=y.a;ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(X+12,GROUND-3,20,3);
   ctx.drawImage(spr,X,Yp-(1-y.a)*6);ctx.globalAlpha=1;
-  if(y.say)drawSay({x:X,y:Yp},y.say.s);
+  if(y.say)drawSay({x:X,y:Yp},y.say.s,'#e8409a');
 }
 function clearScene(){
   const t=G.overT,y=G.yoshi;
@@ -3063,7 +3063,7 @@ function drawBridges(d){
 }
 function bridgeSigns(){
   for(const b of BRIDGES){const x=kmX(b.km)-20;if(x<-120||x>W+10)continue;
-    rect(x+4,150,3,64,'#8d939f');rect(x-20,138,58,16,'#f4f4f4');ctx.strokeStyle='#1f3a6a';ctx.lineWidth=1;ctx.strokeRect(x-18.5,139.5,55,13);txt(b.name,x+9,146.5,9,'#1f3a6a','center');}
+    rect(x+4,150,3,64,'#8d939f');ctx.font='bold 12px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';const bw=Math.ceil(ctx.measureText(b.name).width)+18;rect(x+5-bw/2,132,bw,22,'#1f4f9a');ctx.strokeStyle='#ffffff';ctx.lineWidth=1.2;ctx.strokeRect(x+7-bw/2,134,bw-4,18);ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(b.name,x+5,143.5);}
 }
 // トンネル：入口・出口の坑口と、中のオレンジの照明
 function inTunnel(km){return TUNNELS.find(t=>km>t.km&&km<t.km+t.len);}
@@ -3076,7 +3076,7 @@ function drawTunnelBack(){
     mtn(x0,1);mtn(x1,-1);
     const a=Math.max(-40,x0),b=Math.min(W+40,x1);
     if(b>a){ctx.save();ctx.beginPath();ctx.rect(a,0,b-a,214);ctx.clip();
-      tunnelInside(a,b,G.km*PXKM);
+      tunnelInside(a,b,0);
       ctx.restore();}
     // 坑口の枠（コンクリート）と名前
     for(const [x,dir] of [[x0,1],[x1,-1]]){if(x<-30||x>W+30)continue;rect(x-(dir>0?0:10),64,10,150,'#bfc2c6');rect(x-(dir>0?0:10),64,10,3,'#dcdfe2');}
@@ -3429,8 +3429,9 @@ function drawKids(){
   ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(Math.round(k.x+2),y-1,56,2);
   const fb=((k.t/14)|0)%2,fg=((k.t/14+1)|0)%2,ib=AI_KIDS[fb?'boy2':'boy1'],ig=AI_KIDS[fg?'girl2':'girl1'];
   if(ib&&ib.complete&&ib.naturalWidth&&ig.complete&&ig.naturalWidth){
-    ctx.drawImage(ib,Math.round(k.x+24-ib.naturalWidth/2),y-44,ib.naturalWidth/2,44);
-    ctx.drawImage(ig,Math.round(k.x+60-ig.naturalWidth/2),y-44,ig.naturalWidth/2,44);}
+    const past=k.x+30<G.p.x+CW/2;   // いもっちが通り過ぎたら右（いもっちの方）を向く
+    const dk=(im,rx)=>{const w=im.naturalWidth/2,x0=Math.round(rx-w);if(!past)ctx.drawImage(im,x0,y-44,w,44);else{ctx.save();ctx.translate(x0+w,0);ctx.scale(-1,1);ctx.drawImage(im,0,y-44,w,44);ctx.restore();}};
+    dk(ib,k.x+24);dk(ig,k.x+60);}
   else{drawKid(k.x,y,'#4a8ad8',k.t,0);drawKid(k.x+20,y,'#f07aa8',k.t,1.7);}
 }
 function poseFa(spr,CH){ // 今の絵の手前の腕の角度（renderChar の fa と同じ）
@@ -3887,12 +3888,14 @@ function debugShot(name){
   if(/^bg_/.test(name)){const m=/^bg_([a-zA-Z]+)([\d.]*)$/.exec(name),sc=SECTIONS.find(x=>x.bg===m[1]);G.km=sc.km+(m[2]?+m[2]:3);G.time=900;G.mode='bgview';G.freeze=true;return;}
   if(name==='title'||name==='title2'||name==='title3'){G.mode='title';G.time=name==='title'?44:name==='title3'?300:150;G.km=name==='title'?0:100;G.freeze=true;return;}
   if(name==='imohold'){for(let i=0;i<322;i++)update();G.freeze=true;return;}
+  if(name==='kids3'){while(G.mode==='intro')update();while(!G.kids||G.kids.x>G.p.x-20){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
+  if(name==='bridge1'){while(G.mode==='intro')update();G.km=52.75;G.cars=[];for(let i=0;i<3;i++){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
   if(name==='kids'||name==='kids2'){while(G.mode==='intro')update();while(!G.kids||!G.kids.said){G.p.inv=9;update();}const n=name==='kids'?10:85;for(let i=0;i<n;i++){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
   if(name==='clearimo'){while(G.mode==='intro')update();G.imoDone=true;G.imoHold=false;win();for(let i=0;i<180;i++)update();G.freeze=true;return;}
   if(/^tsukkomi/.test(name)){while(G.mode==='intro')update();G.cars=[];for(let i=0;i<30;i++){G.p.inv=9;update();}G.p.inv=0;G.say={s:'オレだよー！あげないよー！',t:0,big:true};if(name==='tsukkomi2'){G.p.vy=-8;G.p.on=false;for(let i=0;i<14;i++)update();}G.freeze=true;return;}
   if(name==='imodone'){while(G.mode==='intro')update();while(G.imoHold){G.p.inv=9;G.cars=[];update();}for(let i=0;i<14;i++)update();G.p.inv=0;G.freeze=true;return;}
   if(name==='imorun'||/^imofly/.test(name)){while(G.mode==='intro')update();for(let i=0;i<40;i++)update();if(/^imofly/.test(name)){G.p.inv=0;hurt(null,10);const n={imofly:12,imofly2:30,imofly3:60,imofly4:110,imofly5:100}[name];for(let i=0;i<n;i++)update();}G.freeze=true;return;}
-  if(/^intro/.test(name)){const n={intro:90,intro2:380,intro3:570,intro4:420,intro5:442,intro6:567,intro7:640,intro8:200}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
+  if(/^intro/.test(name)){const n={intro:90,intro2:380,intro3:570,intro4:420,intro5:442,intro6:567,intro7:640,intro8:200,intro9:262}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
   for(let i=0;i<540;i++)update();
   const sec=SECTIONS.find(x=>x.bg===name),kmm=/^km([\d.]+)$/.exec(name);
   const tgt=/^shops/.test(name)?5:kmm?+kmm[1]:sec?sec.km+5:{shoefire:40,shoesmoke:40,torn1:30,torn2:30,loc:24,bare:40,clothfire:40,burnt:40,jam:71.5,koji:40,red:100,sastop:60,carsay:30,sa:23.9,sa2:25.4,fuji2:72,tunnel:167.4,bridge:180.3,city:4,honmura:8.3,toll:11.9,tanzawa:30,fuji:85,shizuoka:150,hamana:222,aichi:280,nagoya:321,cop:60,caught:60,clear:140,clear2:140,clear3:140,over:200,losephoto:200,over2:200,toll2:11.9,toll3:11.9,toll4:11.9,vms:(vmsKms()[0]-0.25),speed:14.2,signs:23.3,sain:25.1,fart:40,orbis:41,carin:20,carin2:20,seam1:61.6,seam2:91.6,seam3:127.5,seam4:5.9,dry:30,hitch:30,news:15.6,phone:52,local:240,goalphoto:140,totsuka:24,totsuka2:24,shinkan:215,prints:30,caught2:60,result:140}[name]||0;
