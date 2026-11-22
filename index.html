@@ -955,7 +955,7 @@ function recolorTorn(c,lv){ // 破れ目は線で：斜めの裂け目から白�
       const r2=lv>=2&&Math.abs((x-29)+(y-22)*0.9+jag(y,x)*0.6)<1.2;       // 6回：もう1本（右肩→左下）
       const r3=lv>=2&&y===28+((x>>2)%2)&&x>17&&x<30;                       // 6回：横の裂け目
       const hem=y>=34-(lv>=2?2:0)&&((x+((x*7)%3))%4<(lv>=2?2:1));          // すそのギザギザ
-      const sleeve=y<=23&&(x>=25||x<=14)&&lv>=1&&(lv>=2||x>=25);           // 袖がちぎれる（3回は手前の袖、6回は両方）
+      const sleeve=lv>=2&&y<=21&&x<=14;                                       // 6回：奥の肩だけ少しちぎれる（手前は腕とまざって見えなくなるので肌にしない）
       if(sleeve)T[y*Wd+x]=2;else if(r1||r2||r3||hem)T[y*Wd+x]=1;
       else if(((x*31+y*17)>>>0)%41===0)T[y*Wd+x]=3;}
     else if(PANTS_KEYS.has(k)){
