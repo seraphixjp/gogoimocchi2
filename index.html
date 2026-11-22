@@ -1832,7 +1832,7 @@ function drawLosePhoto(){
   ctx.fillStyle='#5a5a66';ctx.fillRect(-100,30,200,10);
   ctx.imageSmoothingEnabled=false;
   const fr=GRB_SPR.fr[0],w=fr.width/CS,h=fr.height/CS;ctx.drawImage(fr,-92,32-h+PAD,w,h);    // よしちゃんのGRB（スバル）
-  ctx.drawImage(YOSHI.wave,22,32-CH*1.25,CW*1.25,CH*1.25);
+  ctx.save();ctx.translate(22+CW*1.25,32-CH*1.25);ctx.scale(-1,1);ctx.drawImage(YOSHI.wave,0,0,CW*1.25,CH*1.25);ctx.restore(); // 左（GRBの方）を向く
   ctx.restore();
   ctx.font='bold 9px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#3a3a46';
   const dt=new Date();ctx.fillText(`${dt.getFullYear()}.${dt.getMonth()+1}.${dt.getDate()}　名古屋にて　GRBと`,0,56);
