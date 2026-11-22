@@ -1412,13 +1412,13 @@ function update(){
   if(G.grbKm>=GOAL_KM){lose();return;}
   // 区間が変わったら案内
   const si=secAt(G.km);
-  if(si!==G.sec){G.sec=si;snd('stage');banner(SECTIONS[si].name);bgmSet(songFor());if(si>0)G.ciQ.unshift([SECTIONS[si].name,null,'loc']);} // 現在地はつぶやきの場所に（次の順番で）
+  if(si!==G.sec){G.sec=si;snd('stage');bgmSet(songFor());if(si>0)locNote(SECTIONS[si].name,'現在地');} // 地名は真ん中に出さず、つぶやきの場所に（次の順番で）
   if(!G.flags.honmura&&G.km>=HONMURA_KM-1.5){G.flags.honmura=true;banner('本村IC から高速へ！','#9fe0a0');}
   if(!G.flags.toll&&G.km>=TOLL_KM+0.6){G.flags.toll=true;banner('高速道路突入！','#ffd23a');G.bannerQ=['東名高速 名古屋まで '+Math.round(GOAL_KM-G.km)+'km'];snd('stage');G.say={s:'いくぞー！！',t:0};bgmSet(songFor());}
   if(!G.flags.jam&&G.km>=JAM_A-0.6){G.flags.jam=true;banner('渋滞発生！ 御殿場IC付近','#ff9a5a');G.bannerQ=['車の屋根を渡っていけ！'];G.say={s:'渋滞だー！屋根を渡るしかない！',t:0};snd('stage');}
   if(!G.flags.jamEnd&&G.km>=JAM_B+1.5){G.flags.jamEnd=true;banner('渋滞を抜けた！','#7dff8a');news('jam','渋滞の車の屋根を渡る男性　「屋根に足跡」と苦情');}
-  for(const b of BRIDGES)if(!G.flags['b'+b.km]&&G.km>=b.km){G.flags['b'+b.km]=true;banner(b.name,'#bfe8ff');}
-  for(const t of TUNNELS)if(!G.flags['t'+t.km]&&G.km>=t.km-0.2){G.flags['t'+t.km]=true;banner(t.name,'#ffc070');}
+  for(const b of BRIDGES)if(!G.flags['b'+b.km]&&G.km>=b.km){G.flags['b'+b.km]=true;locNote(b.name,'川をわたる');}
+  for(const t of TUNNELS)if(!G.flags['t'+t.km]&&G.km>=t.km-0.2){G.flags['t'+t.km]=true;locNote(t.name,'トンネル');}
   if(G.banner){G.banner.t++;if(G.banner.t>=150&&G.bannerQ.length)G.banner={s:G.bannerQ.shift(),t:0,col:'#ffd27a'};}
   // ジャンプ
   if(jumpPressed&&G.caught<=0){
@@ -1623,11 +1623,12 @@ const CARIN=[
   [335,'ナビが「まもなく目的地」だって！','オレのナビは足だー！']];
 function carIn(s,reply){if(G.phone||G.photoT>0||(G.inCar&&G.inCar.t<200)){(G.ciQ||(G.ciQ=[])).push([s,reply]);if(G.ciQ.length>3){const i=G.ciQ.findIndex(q=>q[2]!=='loc');G.ciQ.splice(i<0?0:i,1);}return;}G.inCar={s,reply,t:0};} // あふれたら古いつぶやきから捨てる（現在地は残す）
 function carInEv(k,s,reply){if(G.flags['ev'+k]||G.mode!=='play')return;G.flags['ev'+k]=true;carIn(s,reply);} // 出来事に反応（1回だけ）
+function locNote(name,label){const q=G.ciQ||(G.ciQ=[]);let i=q.findIndex(x=>x[2]!=='loc');if(i<0)i=q.length;q.splice(i,0,[name,null,'loc',label]);} // 地名（区間・川・トンネル）はつぶやきの場所へ。つぶやき・電話と順番待ち
 const bannerOn=()=>!!(G.banner&&G.banner.t<150);
 const panelN=()=>(bannerOn()?1:0)+(G.news?1:0)+(G.inCar||G.phone?1:0); // 上の表示の数（見出し・速報・車内か電話）
 function carInUpdate(){
   for(const [km,s,r] of CARIN)if(!G.flags['ci'+km]&&G.km>=km){G.flags['ci'+km]=true;if(G.grbStop<=0)carIn(s,r);}
-  if(!G.inCar&&!G.phone&&G.photoT<=0&&panelN()<2&&G.ciQ&&G.ciQ.length){const [s,r,k]=G.ciQ.shift();G.inCar={s,reply:r,t:0,loc:k==='loc'};}
+  if(!G.inCar&&!G.phone&&G.photoT<=0&&panelN()<2&&G.ciQ&&G.ciQ.length){const [s,r,k,lb]=G.ciQ.shift();G.inCar={s,reply:r,t:0,loc:k==='loc',lb};}
   const c=G.inCar;if(!c)return;
   c.t++;
   if(c.t===120&&c.reply&&G.caught<=0)G.say={s:c.reply,t:0,big:true};
@@ -1642,7 +1643,7 @@ function drawCarIn(){ // v19：文字を大きく（9→13px）
     ctx.fillStyle='rgba(10,12,24,.82)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#7dff8a';ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
     ctx.fillStyle='#e8402c';ctx.beginPath();ctx.arc(x+20,y+14,7,Math.PI*0.85,Math.PI*2.15);ctx.lineTo(x+20,y+28);ctx.closePath();ctx.fill();
     ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(x+20,y+14,2.8,0,7);ctx.fill();
-    ctx.textAlign='left';ctx.textBaseline='middle';ctx.font=JF(9);ctx.fillStyle='#7dff8a';ctx.fillText('現在地',x+36,y+9);
+    ctx.textAlign='left';ctx.textBaseline='middle';ctx.font=JF(9);ctx.fillStyle='#7dff8a';ctx.fillText(c.lb||'現在地',x+36,y+9);
     ctx.font=JF(14);ctx.fillStyle='#ffffff';ctx.fillText(c.s,x+36,y+23);ctx.globalAlpha=1;return;}
   ctx.font=JF(13);const w=Math.min(W-150,Math.ceil(ctx.measureText(c.s).width)+52),x=W-6-w,y=112,h=34;
   ctx.fillStyle='rgba(10,12,24,.82)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ff9ad2';ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
@@ -2824,6 +2825,7 @@ function drawHUD(){
     rect(20+i*15,45,13,7,'rgba(13,16,32,.6)');if(lv>0)rect(21+i*15,46,Math.round(11*lv),5,G.water<WATER_MAX*0.2?'#ff8a6a':lv<1?'#6fa8d8':'#3fb6ff');}
   if(G.mode==='play'&&G.water<WATER_MAX*0.2&&((G.time/15)|0)%2)txt(G.water<=0?'水分ぎれ！減速中':'水分が少ない！',98,49,9,'#ff9a9a');
   if(G.grbStop>0&&G.mode==='play')txt(`よしちゃん ${G.grbSA.n}SAで休憩中！ あと${Math.ceil(G.grbStop/60)}秒`,W-8,48,10,'#ffe14d','right');
+  txt(`現在地：${SECTIONS[secAt(G.km)].name}`,W-8,32,9,'#cfe0ff','right');
   // 左下：スピードメーター
   const v=Math.round(G.mode==='play'?G.V||G.v:G.v),over=G.v>LIMIT||G.red>0;
   ctx.fillStyle='rgba(10,12,24,.6)';ctx.fillRect(6,H-40,132,34);
