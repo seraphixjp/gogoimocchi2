@@ -2596,7 +2596,7 @@ function ledCanvas(lines,cols){ // 小さく描いた文字を2倍にして、�
   t.width=tw;t.height=LH*lines.length;tg.font=F;tg.textBaseline='middle';tg.textAlign='center';
   lines.forEach((l,i)=>{tg.fillStyle=cols[i];tg.fillText(l,tw/2,i*LH+LH/2+0.5);});
   const S=2,o=document.createElement('canvas');o.width=tw*S;o.height=t.height*S;const g=o.getContext('2d');
-  if(!LED_CACHE._dot){const d=document.createElement('canvas');d.width=d.height=2;const dg=d.getContext('2d');dg.fillStyle='#fff';dg.fillRect(0,0,1.4,1.4);LED_CACHE._dot=d;
+  if(!LED_CACHE._dot){const d=document.createElement('canvas');d.width=d.height=2;const dg=d.getContext('2d');dg.fillStyle='#fff';dg.fillRect(0,0,1.7,1.7);LED_CACHE._dot=d;
     const e=document.createElement('canvas');e.width=e.height=2;const eg=e.getContext('2d');eg.fillStyle='#2a221c';eg.fillRect(0,0,1,1);LED_CACHE._dim=e;}
   g.imageSmoothingEnabled=false;g.drawImage(t,0,0,o.width,o.height);
   g.globalCompositeOperation='destination-in';g.fillStyle=g.createPattern(LED_CACHE._dot,'repeat');g.fillRect(0,0,o.width,o.height);
@@ -2606,16 +2606,17 @@ function ledCanvas(lines,cols){ // 小さく描いた文字を2倍にして、�
 }
 function vmsText(km){
   const L=[];
-  if(km<JAM_A&&JAM_A-km<45)return [['御殿場付近','渋滞 10km'],['#ffb21a','#ff3a2a']];
-  if(G.cloth==='fire')L.push([['燃える人','走行中'],['#ffb21a','#ff3a2a']]);
-  if(G.copSeen)L.push([['速度違反の','歩行者 追跡中'],['#ffb21a','#ff3a2a']]);
+  if(km<JAM_A&&JAM_A-km<45)return [['御殿場付近','渋滞 10km'],['#ffb21a','#ff6a52']];
+  if(G.cloth==='fire')L.push([['燃える人','走行中'],['#ffb21a','#ff6a52']]);
+  if(G.copSeen)L.push([['速度違反の','歩行者 追跡中'],['#ffb21a','#ff6a52']]);
   if(G.farts)L.push([['焼き芋のにおい','窓を閉めて'],['#ffb21a','#ffb21a']]);
   if(G.photos.length)L.push([['オービス作動中','笑顔でどうぞ'],['#ffb21a','#ffb21a']]);
-  L.push([['路上に人','注意'],['#ffb21a','#ff3a2a']],[['走る人の','目撃情報あり'],['#ffb21a','#ffb21a']],
-    [['名古屋まで',Math.round(GOAL_KM-6-km)+'km '+Math.round((GOAL_KM-6-km)/100*60)+'分'],['#ffb21a','#ffb21a']],[['この先','工事中'],['#ffb21a','#ff3a2a']]);
+  L.push([['路上に人','注意'],['#ffb21a','#ff6a52']],[['走る人の','目撃情報あり'],['#ffb21a','#ffb21a']],
+    [['名古屋まで',Math.round(GOAL_KM-6-km)+'km '+Math.round((GOAL_KM-6-km)/100*60)+'分'],['#ffb21a','#ffb21a']],[['この先','工事中'],['#ffb21a','#ff6a52']]);
   return pick(L);
 }
 function drawVMS(){
+  G.vmsRects=[];
   if(G.km<TOLL_KM)return;
   for(const k of vmsKms()){
     const x=kmX(k);if(x<-180||x>W+40)continue;
@@ -2623,7 +2624,8 @@ function drawVMS(){
     const [lines,cols]=G.vms[k],led=ledCanvas(lines,cols),w=Math.max(120,led.width+18),h=led.height+14,y=50;
     rect(x+w-16,y+h,6,214-y-h,'#8a909c');rect(x+w-15,y+h,2,214-y-h,'#aab0ba');rect(x+w-30,y+h,34,4,'#8a909c'); // 柱と腕
     rect(x-2,y-2,w+4,h+4,'#5a5e68');rect(x,y,w,h,'#101014');rect(x,y+h-3,w,3,'#2a2c32');
-    ctx.drawImage(led,Math.round(x+(w-led.width)/2),Math.round(y+7));
+    ctx.drawImage(led,Math.round(x+(w-led.width)/2),Math.round(y+7));G.vmsRects.push([x-2,y-2,w+4,h+4]);
+    ctx.globalCompositeOperation='lighter';ctx.globalAlpha=0.55;ctx.drawImage(led,Math.round(x+(w-led.width)/2),Math.round(y+7));ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over'; // 光って見えるように重ねる
   }
 }
 function greenSign(x,y,w,h,lines){
@@ -2822,8 +2824,12 @@ function drawSayAny(p,s){drawSay(p,s);}
 function drawBanner(){
   const b=G.banner;if(!b||b.t>150)return;
   const a=Math.min(1,b.t/10,(150-b.t)/15);ctx.globalAlpha=Math.max(0,a);
-  ctx.fillStyle='rgba(10,12,24,.55)';ctx.fillRect(0,78,W,30);
-  txt(b.s,W/2,93,15,b.col,'center');ctx.globalAlpha=1;
+  ctx.save();ctx.beginPath();ctx.rect(0,78,W,30);for(const [rx,ry,rw,rh] of (G.vmsRects||[]))ctx.rect(rx+rw,ry,-rw,rh); // 電光掲示板の上には帯を敷かない（赤い文字が暗くならないように）
+  ctx.clip('evenodd');ctx.fillStyle='rgba(10,12,24,.55)';ctx.fillRect(0,78,W,30);ctx.restore();
+  let cx=W/2;ctx.font='bold 15px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';const tw=ctx.measureText(b.s).width;
+  for(const [rx,ry,rw,rh] of (G.vmsRects||[]))if(ry<108&&ry+rh>78&&rx<cx+tw/2+6&&rx+rw>cx-tw/2-6){ // 掲示板と重なる時は、空いている側へずらす
+    cx=rx>W-rx-rw?Math.max(tw/2+8,rx/2):Math.min(W-tw/2-8,(rx+rw+W)/2);}
+  txt(b.s,cx,93,15,b.col,'center');ctx.globalAlpha=1;
 }
 // ---------- タイトルロゴ：1作目のロゴ（街並みのパネル＋GOGO＋いもっち）を進化。横浜の朝→富士山→名古屋の夕焼け、燃える「2」 ----------
 let LOGO2=null;
@@ -2921,6 +2927,15 @@ function drawLogoRunner(){
   ctx.restore();
 }
 // ロゴの下：よしちゃんのGRBを追いかける小さい帯
+function titleSay(s,tx,ty){ // タイトルの小さい吹き出し（しっぽの先＝(tx,ty)＝いもっちの頭の上）
+  ctx.font='bold 10px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';
+  const w=Math.ceil(ctx.measureText(s).width)+12,h=16;let x=Math.round(tx-w/2),y=Math.round(ty-h-6);x=Math.max(4,Math.min(W-w-4,x));
+  ctx.fillStyle='#16121e';ctx.fillRect(x-1,y-1,w+2,h+2);ctx.fillStyle='#ffffff';ctx.fillRect(x,y,w,h);
+  const px=Math.max(x+5,Math.min(x+w-9,Math.round(tx)));
+  ctx.fillStyle='#16121e';ctx.fillRect(px-1,y+h,6,2);ctx.fillRect(px,y+h+2,4,2);ctx.fillRect(px+1,y+h+4,2,2);
+  ctx.fillStyle='#ffffff';ctx.fillRect(px,y+h,4,1);ctx.fillRect(px+1,y+h+1,2,2);
+  ctx.fillStyle='#1f44e6';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s,x+w/2,y+h/2+1);
+}
 function drawTitleChase(){
   const gy=181,t=G.time,sc=0.55;
   for(let x=-((t*2)%16);x<W;x+=16)rect(x,gy+1,9,1,'rgba(255,255,255,.3)');
@@ -2932,7 +2947,7 @@ function drawTitleChase(){
   const ix=gx-84,spr=CHAR.run[((t/3)|0)%8];
   ctx.save();ctx.translate(Math.round(ix),gy-Math.round(FOOT*sc));ctx.scale(sc,sc);ctx.drawImage(spr,0,0);
   for(const [fx,fy] of firePoints(spr).feet)flame(fx,fy+1,2.4,t*0.6+fx);ctx.restore();
-  if(((t/90)|0)%2)txt(pick2(seeded(((t/180)|0)+3),['いわもとー！！','まってー！！','置いてかないでー！']),Math.max(40,ix+12),gy-38,9,'#ffffff','center');
+  if(((t/90)|0)%2)titleSay(pick2(seeded(((t/180)|0)+3),['いわもとー！！','まってー！！','置いてかないでー！']),ix+24*sc,gy-Math.round(FOOT*sc)-4);
 }
 function drawTitle(){
   ctx.fillStyle='rgba(13,16,32,.5)';ctx.fillRect(0,0,W,H);
