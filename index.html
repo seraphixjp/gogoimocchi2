@@ -2349,6 +2349,7 @@ function mmBay(b){
 }
 
 // ---------- 区間ごとの名物（実際の景色に寄せる） ----------
+function groundBand(y0,col='#8fa27e'){const g=ctx.createLinearGradient(0,y0,0,136);g.addColorStop(0,shade(col,14));g.addColorStop(1,shade(col,-10));ctx.fillStyle=g;ctx.fillRect(-4,y0,328,136-y0);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(-4,y0,328,0.8);}
 function jcastle(x,base,s,roof='#4a5260',wall='#f4f2ec'){ // 天守（白い壁・灰色の屋根・石垣）
   ctx.save();ctx.translate(x,base);ctx.scale(s,s);
   poly([[-14,0],[-11,-7],[11,-7],[14,0]],'#8a8478');for(let k=-12;k<12;k+=3)F(k,-6,2.6,0.4,'#6e685e');
@@ -2423,6 +2424,7 @@ const BGS={
     mountains(o*0.02,98,50,'#8aa7c2',31,500,4);
     mountains(o*0.05,110,24,'#7a98ae',32,420,5);
     haze(90,118,'rgba(225,236,246,.5)');
+    groundBand(115);
     skyline(o*0.12,420,41,118,8,30,['#b8c2cc','#c8ccd0','#aab4c0','#d0c8bc'],0.06);   // 遠くの市街地
     // 物流倉庫（大きな箱・青いライン・シャッター）
     tile(o*0.26,340,b=>{for(const [x,w,h,c] of [[10,82,22,'#dfe3e8'],[150,64,18,'#e8e4dc'],[250,70,26,'#d6dbe2']]){
@@ -2434,9 +2436,9 @@ const BGS={
       rect(b+120,92,30,2,'#d6cdbf');});
     houses(o*0.4,280,132,44);
     // ロードサイドの看板（ガソリンスタンド・お店。どこかの実在の店ではない）
-    tile(o*0.5,460,b=>{rect(b+60,92,2,40,'#8d939f');{const w=bgTextW('ガソリン',7)+8;rect(b+61-w/2,80,w,14,'#d8483b');rect(b+62-w/2,83,w-2,10,'#f4f4f4');}
+    tile(o*0.5,460,b=>{rect(b+59.5,92,3,40,'#6e7480');rect(b+58,128,6,4,'#8a8e96');{const w=bgTextW('ガソリン',7)+8;rect(b+61-w/2,80,w,14,'#d8483b');rect(b+62-w/2,83,w-2,10,'#f4f4f4');}
       bgLabel('ガソリン',b+61,88.5,7,'#1f2a44');
-      rect(b+260,98,2,34,'#8d939f');boardText('ホームセンター',b+261,93,7,'#2f7a46','#ffffff');});
+      rect(b+259.5,98,3,34,'#6e7480');rect(b+258,128,6,4,'#8a8e96');boardText('ホームセンター',b+261,93,7,'#2f7a46','#ffffff');});
     trees(o*0.62,220,135,'#4f8a4a',45,0.5);
   },
   fuji(o,lo){
@@ -2650,6 +2652,7 @@ Object.assign(BGS,{
     fujiSan(150-lo*0.02,120,0.95,true);
     ridge(o*0.04,118,30,'#5a7f96',111,600,true);                         // 愛鷹山
     haze(100,126,'rgba(220,234,246,.4)');
+    groundBand(120);
     town(o*0.2,128,112,18,380);
     trees(o*0.55,180,135,'#4a8a45',113,0.7);
   },
@@ -2657,6 +2660,7 @@ Object.assign(BGS,{
     skyC(['#66a6e4','#b4d6f4','#f0f5fa']);cloudC(o*0.03,480,14,1,'#ffffff','#d0dcea',17);
     fujiSan(200-lo*0.03,118,1.2,true);
     haze(96,124,'rgba(225,235,245,.45)');
+    groundBand(118);
     tile(o*0.18,420,b=>{factory(b+10,126,70,16,'#cfd4da');factory(b+110,126,50,12,'#d8d4cc');factory(b+220,126,90,18,'#c9ced4');
       chimney(b+40,110,46);chimney(b+70,112,34);chimney(b+150,114,40);chimney(b+260,108,52);chimney(b+300,112,30);});
     town(o*0.35,130,121,14,320);
@@ -2761,6 +2765,7 @@ Object.assign(BGS,{
     tile(o*0.015,640,b=>{const x=b+240;ctx.fillStyle='#8ea6c2';ctx.beginPath();ctx.moveTo(x-60,106);ctx.quadraticCurveTo(x-20,90,x-6,66);ctx.lineTo(x,63);ctx.lineTo(x+6,66);ctx.quadraticCurveTo(x+22,92,x+64,106);ctx.fill();
       ctx.fillStyle='rgba(255,255,255,.08)';ctx.beginPath();ctx.moveTo(x-60,106);ctx.quadraticCurveTo(x-20,90,x-6,66);ctx.lineTo(x,63);ctx.lineTo(x-2,106);ctx.fill();}); // 大山（すそが広がる三角）
     haze(88,118,'rgba(225,236,246,.5)');
+    groundBand(114);
     tile(o*0.12,520,b=>{for(const [x,h] of [[80,44],[96,38],[300,40]]){F(b+x,120-h,12,h,'#e6e2da');F(b+x+9,120-h,3,h,'#c8c2b6');for(let y=122-h;y<118;y+=2.4)F(b+x+1,y,7.6,0.8,'#9ab0c2');}}); // 海老名の高いマンション
     town(o*0.14,120,72,16,380);
     town(o*0.3,128,73,22,320);
@@ -2852,6 +2857,7 @@ Object.assign(BGS,{
   },
   hamamatsu(o){ // 浜松：ハーモニカ形のタワーと街・工場
     skyC();cloudC();
+    groundBand(116);
     skyline(o*0.12,400,181,118,12,40,['#c8ccd4','#d8d4cc','#b8c2cc'],0.08);
     tile(o*0.12,700,b=>actTower(b+200,118));
     tile(o*0.28,380,b=>{factory(b+20,128,80,14,'#d4d8dc');factory(b+180,128,60,12,'#cfcac2');chimney(b+60,114,26);});
@@ -2895,6 +2901,7 @@ Object.assign(BGS,{
   toyota(o){ // 豊田：白い柱のスタジアム・大きな自動車工場（どこかの会社ではない）・鉄塔
     skyC();cloudC();
     ridge(o*0.03,108,18,'#8a9cb0',221,600);
+    groundBand(112);
     tile(o*0.1,700,b=>stadiumT(b+500,116));
     tile(o*0.2,460,b=>{factory(b+10,124,120,18,'#eceef0');factory(b+150,124,90,14,'#e2e4e6');rect(b+250,96,12,28,'#d8dade');chimney(b+252,96,0);
       rect(b+300,118,60,6,'#3a3d44');for(let k=0;k<7;k++)rect(b+302+k*8,114,6,4,['#f4f4f4','#2a2a30','#c8202a','#b8bec8'][k%4]);});
