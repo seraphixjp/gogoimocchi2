@@ -1771,7 +1771,7 @@ function drawGoalPhoto(){
   ctx.fillStyle='#8a5a6a';for(let i=0;i<7;i++)ctx.fillRect(-100+i*30,-30+(i%3)*8,24,70);ctx.fillStyle='#5a5a66';ctx.fillRect(-100,30,200,10);}
   ctx.imageSmoothingEnabled=false;
   const CH2=G.cloth==='burnt'||G.cloth==='fire'?CHAR_BURNT:G.shoe==='bare'?CHAR_BARE:CHAR;
-  ctx.drawImage(CH2.idle,-86,-60,CW*1.9,CH*1.9);ctx.drawImage(YOSHI.wave,-4,-62,CW*1.9,CH*1.9);
+  ctx.drawImage(CH2.idle,-86,-60,CW*1.9,CH*1.9);ctx.save();ctx.translate(-4+CW*1.9,-62);ctx.scale(-1,1);ctx.drawImage(YOSHI.wave,0,0,CW*1.9,CH*1.9);ctx.restore(); // よしちゃんは左（いもっちの方）を向く
   ctx.font='bold 9px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#3a3a46';
   const dt=new Date();ctx.fillText(`${dt.getFullYear()}.${dt.getMonth()+1}.${dt.getDate()}　${SECTIONS[secAt(G.result.km)].name}付近にて`,0,56);
   ctx.restore();
