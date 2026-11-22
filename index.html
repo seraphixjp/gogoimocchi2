@@ -1336,7 +1336,7 @@ function newGame(){
     nextCar:0,itemAcc:0,nextItem:300,coneAcc:0,nextCone:2200,cop:null,copCD:0,overT2:0,copSeen:false,caught:0,
     say:null,banner:null,bannerQ:[],sec:0,bar:{km:TOLL_KM+0.4,state:'up',vy:0,y:0,rot:0},flags:{},
     passed:0,hits:0,caughtN:0,shake:0,overT:0,paused:false,result:null,boostT:0,
-    water:WATER_MAX,dry:false,smoke:[],shoe:'ok',cloth:'ok',clothT:0,fireSayT:0,red:0,redN:0,smashed:0,flyers:[],kojiAcc:0,nextKoji:rnd(10,16),helmetKms:[rnd(95,150),rnd(200,270)],grbStop:0,grbSA:null,V:0,oji:{state:'stand',t:0,a:1,x:0,say:null},vms:{},dryT:0,ciQ:[],newsQ:[],news:null,phone:null,nextHitch:rnd(28,40),imoN:0,fartT:0,farts:0,photos:[],photoT:0,flash:0,inCar:null,imoHold:false,imoFly:null});
+    water:WATER_MAX,dry:false,smoke:[],shoe:'ok',cloth:'ok',clothT:0,fireSayT:0,red:0,redN:0,smashed:0,flyers:[],kojiAcc:0,nextKoji:rnd(10,16),helmetKms:[rnd(95,150),rnd(200,270)],grbStop:0,grbSA:null,V:0,oji:{state:'stand',t:0,a:1,x:0,say:null},vms:{},dryT:0,ciQ:[],newsQ:[],news:null,phone:null,nextHitch:rnd(28,40),imoN:0,fartT:0,farts:0,photos:[],photoT:0,flash:0,inCar:null,imoHold:false,imoBit:false,imoFly:null});
   G.p={x:PX,y:GROUND-FOOT,vx:0,vy:0,on:true,jumps:0,inv:0,hurtT:0,anim:0,onCar:null};
   pauseBtn.hidden=true;
 }
@@ -2049,12 +2049,13 @@ function copUpdate(){
 // スタート：いもっちの家の前。よしちゃんがGRBに乗り込んで、いもっちを乗せたつもりで出発してしまう
 function intro(){
   G.introT++;const T=G.introT,t=T-170,y=G.yoshi;           // 最初の170フレームはいもっちの気合い（1秒待ってから話す）
+  if(T===1){G.imoHold=true;G.imoBit=false;} // 最初は丸ごとのほかほか焼き芋
   if(T===75)G.say={s:'今日は名古屋で取材だ！',t:0};
   if(T===125)G.say={s:'今日は遅れないぞ！',t:0};
   if(T===168)G.say=null;
   if(y.say)y.say.t++;
   if(t===20)y.say={s:'いもっち、乗ったー？',t:0};
-  if(t===75){y.say=null;G.say={s:'（焼き芋うまっ…）',t:0};G.imoHold=true;}
+  if(t===75){y.say=null;G.say={s:'（焼き芋うまっ…）',t:0};G.imoHold=true;G.imoBit=true;addText(G.p.x+30,G.p.y+8,'もぐっ','#ffe28a');}
   if(t===135){G.say=null;y.say={s:'よし、出発！',t:0};}
   if(t===175)y.x0=y.x;
   if(t>=175&&t<205){y.say=null;y.x=y.x0+(grbX()+36-y.x0)*(t-174)/30;y.walk+=1.6;}  // 運転席のドア（前のドア）まで歩く
@@ -3377,17 +3378,19 @@ function poseFa(spr,CH){ // 今の絵の手前の腕の角度（renderChar の f
 }
 function handXY(fa){const e=[21+6*Math.sin(fa),20+6*Math.cos(fa)],a=fa+0.35;return [e[0]+6*Math.sin(a),e[1]+6*Math.cos(a)];}
 function imoHandAt(p){const h=handXY(G.imoFa??0.15);return [p.x+h[0],p.y+h[1]];}
-let YAKIIMO=null;
-function drawYakiimo(x,y,rot){ // 中心(x,y)。皮は赤紫・かじった所は黄色（小さい画像に1回描いて使う。画面に直接くり抜くと背景まで消えて黒い点になる）
-  if(!YAKIIMO){const c=document.createElement('canvas');c.width=64;c.height=32;const g=c.getContext('2d'),m=ctx;ctx=g;g.scale(4,4);g.translate(8,4);
+const YAKIIMO={};
+function drawYakiimo(x,y,rot,whole){ // 中心(x,y)。皮は赤紫・かじった所は黄色（小さい画像に1回描いて使う。画面に直接くり抜くと背景まで消えて黒い点になる）
+  const key=whole?'w':'b';
+  if(!YAKIIMO[key]){const c=document.createElement('canvas');c.width=64;c.height=32;const g=c.getContext('2d'),m=ctx;ctx=g;g.scale(4,4);g.translate(8,4);
     try{ctx.fillStyle=OUTLINE;ctx.beginPath();ctx.ellipse(0,0,6.2,3.2,0,0,7);ctx.fill();
       ctx.fillStyle='#8e2f55';ctx.beginPath();ctx.ellipse(0,0,5.4,2.5,0,0,7);ctx.fill();
       ctx.fillStyle='#b8507a';ctx.fillRect(-3.5,-1.8,5,1);
-      ctx.fillStyle='#f6c64a';ctx.beginPath();ctx.ellipse(4.2,0,2.2,2.4,0,0,7);ctx.fill();
-      ctx.fillStyle='#ffe28a';ctx.fillRect(3.4,-1.2,1.4,1);
-      ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(7.6,0,2.3,0,7);ctx.fill();}finally{ctx=m;}
-    YAKIIMO=c;}
-  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.drawImage(YAKIIMO,-8,-4,16,8);ctx.restore();
+      if(whole){ctx.fillStyle='#6e2242';ctx.fillRect(5,-0.5,1.6,1);ctx.fillRect(-6.4,-0.4,1.4,0.8);}   // 両端のしっぽ
+      else{ctx.fillStyle='#f6c64a';ctx.beginPath();ctx.ellipse(4.2,0,2.2,2.4,0,0,7);ctx.fill();
+        ctx.fillStyle='#ffe28a';ctx.fillRect(3.4,-1.2,1.4,1);
+        ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(7.6,0,2.3,0,7);ctx.fill();}}finally{ctx=m;}
+    YAKIIMO[key]=c;}
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.drawImage(YAKIIMO[key],-8,-4,16,8);ctx.restore();
 }
 function drawPlayer(p){
   let spr;const CH=charNow(false);
@@ -3415,8 +3418,8 @@ function drawPlayer(p){
   if(G.red>0&&G.mode==='play'){ctx.globalAlpha=0.28;ctx.drawImage(spr,-14,0);ctx.globalAlpha=0.14;ctx.drawImage(spr,-28,0);ctx.globalAlpha=1;}
   ctx.drawImage(spr,0,0);
   G.imoFa=poseFa(spr,CH);
-  if(G.imoHold){const h=handXY(G.imoFa);drawYakiimo(h[0]+3,h[1]-0.3,-0.35);const hx=Math.round(h[0]),hy=Math.round(h[1]);ctx.fillStyle=OUTLINE;ctx.fillRect(hx-2,hy-2,4,5);ctx.fillStyle=C.skin;ctx.fillRect(hx-1,hy-1,3,3);ctx.fillStyle=C.skinD;ctx.fillRect(hx-1,hy+1,3,1); // 芋をにぎる手（芋の上にかぶせる）
-    if(G.mode==='intro'){ctx.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<2;i++){const tt=(G.time*0.6+i*14)%28;ctx.fillRect(h[0]+5+i*2-Math.sin(tt/5)*1.5,h[1]-6-tt*0.5,1,2);}}}
+  if(G.imoHold){const h=handXY(G.imoFa);drawYakiimo(h[0]+3,h[1]-0.3,-0.35,!G.imoBit);const hx=Math.round(h[0]),hy=Math.round(h[1]);ctx.fillStyle=OUTLINE;ctx.fillRect(hx-2,hy-2,4,5);ctx.fillStyle=C.skin;ctx.fillRect(hx-1,hy-1,3,3);ctx.fillStyle=C.skinD;ctx.fillRect(hx-1,hy+1,3,1); // 芋をにぎる手（芋の上にかぶせる）
+    if(G.mode==='intro'||!G.imoBit){for(let i=0;i<(G.imoBit?2:3);i++){const tt=(G.time*0.5+i*(G.imoBit?14:9.3))%28;const sx=Math.round(h[0]+5+i*2.5+Math.sin(tt/4+i)*1.5),sy=Math.round(h[1]-4-tt*0.55),al=tt<16?1:(28-tt)/12;ctx.fillStyle=`rgba(110,110,120,${0.55*al})`;ctx.fillRect(sx-1,sy-1,4,5);ctx.fillStyle=`rgba(255,255,255,${al})`;ctx.fillRect(sx,sy,2,3);}}}
   if(G.red>0&&G.mode==='play'){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=(0.6+0.25*Math.sin(G.time/3))*(G.red<60?G.red/60:1);ctx.drawImage(spr,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;}
   if((G.mode==='play'&&G.red<=0)||G.mode==='clear'){const fp=firePoints(spr),t=G.time;
     if(G.shoe==='fire')for(const [fx,fy] of fp.feet)flame(fx,fy+1,2.2,t*0.6+fx);
@@ -3778,7 +3781,7 @@ function draw(){
   for(const it of G.items)drawItem(it);
   if(G.smoke&&G.smoke.length)drawSmoke();
   drawPlayer(G.p);
-  if(G.imoFly){const f=G.imoFly;ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(Math.round(f.x-4),GROUND-1,8,2);drawYakiimo(f.x,f.y,f.rot);}
+  if(G.imoFly){const f=G.imoFly;ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(Math.round(f.x-4),GROUND-1,8,2);drawYakiimo(f.x,f.y,f.rot,!G.imoBit);}
   drawSpeedFx();
   drawTunnelFront();
   for(const f of G.fx){ctx.fillStyle=f.col;ctx.fillRect(Math.round(f.x),Math.round(f.y),2,2);}
