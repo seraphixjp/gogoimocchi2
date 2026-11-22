@@ -992,7 +992,6 @@ function tornSet(base,lv){return {run:base.run.map(c=>recolorTorn(c,lv)),idle:re
 const CHAR_TORN1=tornSet(CHAR,1),CHAR_TORN2=tornSet(CHAR,2),CHAR_BARE_TORN1=tornSet(CHAR_BARE,1),CHAR_BARE_TORN2=tornSet(CHAR_BARE,2);
 const tornLv=()=>G.hits>=6?2:G.hits>=3?1:0;   // ぶつかった回数で服が破れる（3回・6回）
 function charNow(fireAsBurnt){ // 今のいもっちの絵：燃えた服が最優先 → 破れた服 → 裸足 → ふつう
-  if(G.imoHold)return (G.cloth==='burnt'||(fireAsBurnt&&G.cloth==='fire'))?CHAR_IMO_BURNT:G.shoe==='bare'?CHAR_IMO_BARE:CHAR_IMO;
   if(G.cloth==='burnt'||(fireAsBurnt&&G.cloth==='fire'))return CHAR_BURNT;
   const lv=tornLv(),bare=G.shoe==='bare';
   if(lv)return bare?(lv>1?CHAR_BARE_TORN2:CHAR_BARE_TORN1):(lv>1?CHAR_TORN2:CHAR_TORN1);
