@@ -577,6 +577,7 @@ function bldg(x,base,w,h,col,seed,lit=0.15){
 function skyline(off,span,seed,base,hMin,hMax,cols,lit){
   const r=seeded(seed),B=[];let x=0;
   while(x<span){const w=10+r()*22|0,h=hMin+r()*(hMax-hMin)|0;B.push([x,w,h,cols[(r()*cols.length)|0],(r()*1e6)|0]);x+=w+(r()*3|0);}
+  if(typeof stripDraw==='function'){stripDraw('s'+seed+'_'+base+'_'+hMax+'_'+span+'_'+cols.join(''),off,span,base-hMax-4,base+1,()=>{for(const [bx,w,h,c,s] of B)bldg(bx,base,w,h,c,s,lit);});return;}  // 重いので画像にして使い回す
   tile(off,span,b=>{for(const [bx,w,h,c,s] of B){const X=Math.round(b+bx);if(X>320||X+w<0)continue;bldg(X,base,w,h,c,s,lit);}});
 }
 // 木の茂み
@@ -2107,6 +2108,9 @@ function acUnit(x,y){F(x,y,6,4.4,'#e6e8ea');F(x,y+4.4,6,0.5,'#a8acb2');ctx.strok
 function body(X,w,h,wall,r){const top=137-h;F(X,top,w,h,wall);F(X+w-2.5,top,2.5,h,shade(wall,-22));F(X,top,w,1.2,shade(wall,-30));F(X,top+1.2,w,0.6,shade(wall,20));return top;}
 function bike(x){ctx.strokeStyle='#3a3e46';ctx.lineWidth=0.45;ctx.beginPath();ctx.arc(x,135.2,1.8,0,7);ctx.arc(x+5.4,135.2,1.8,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(x,135.2);ctx.lineTo(x+2.4,132.6);ctx.lineTo(x+5.4,135.2);ctx.moveTo(x+2.4,132.6);ctx.lineTo(x+4.6,132.4);ctx.stroke();F(x+1.6,131.9,1.8,0.6,'#3a3e46');}
 function vend(x,col='#2a6fd6'){F(x,124,7,13,'#f2f4f6');F(x,124,7,1.4,col);for(let k=0;k<3;k++)for(let j=0;j<3;j++)F(x+0.9+j*1.9,126+k*2.2,1.3,1.6,['#e24a3a','#f2b630','#3aa0e0','#5ac05a','#f2f2f2'][(k*3+j)%5]);F(x+1,133,5,1.6,'#1a1c22');F(x+5,128,1,1.4,'#7a7e86');}
+function barberPole(px,py){F(px-0.4,py-1,3.6,1,'#c8ccd2');F(px-0.4,py+11,3.6,1,'#c8ccd2');ctx.save();ctx.beginPath();ctx.rect(px,py,2.8,11);ctx.clip();F(px,py,2.8,11,'#ffffff');
+  const t=(G.time*0.12)%7.2;for(let k=-3;k<4;k++){const y=py+k*3.6+t;poly([[px,y],[px+2.8,y-1.4],[px+2.8,y],[px,y+1.4]],(k+8)%2?'#d4201a':'#1f4fb0');}ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(px+0.4,py,0.6,11);}
 const SHOP_ROW=[ // [種類, 幅]
   ['conv',88],['ramen',46],['fudosan',44],['coin',42],['barber',34],['izakaya',44],['mansion',52],['gas',128],['cafe',40],['drug',72],['cleaning',38],['conv2',70],['book',50],['gyudon',44],['bento',42]];
 const SHOP_SPAN=SHOP_ROW.reduce((a,[k,w])=>a+w+2,0);
@@ -2157,9 +2161,7 @@ const SHOPDRAW={
     const top=body(X,w,34,'#f0f0f0');upWin(X+4,top+4,w-10,7,r());
     F(X+1,top+13,w-2,6.6,'#ffffff');F(X+1,top+19,w-2,0.8,'#1f3f8a');stxt('BARBER ヒロ',X+w/2,top+16.4,3.4,'#1f3f8a');
     glass(X+3,top+20,w-12,14);
-    const px=X+w-6,py=top+20;F(px-0.4,py-1,3.6,1,'#c8ccd2');F(px-0.4,py+11,3.6,1,'#c8ccd2');ctx.save();ctx.beginPath();ctx.rect(px,py,2.8,11);ctx.clip();F(px,py,2.8,11,'#ffffff');
-    const t=(G.time*0.12)%6;for(let k=-3;k<4;k++){const y=py+k*3.6+t;poly([[px,y],[px+2.8,y-1.4],[px+2.8,y],[px,y+1.4]],k%2?'#d4201a':'#1f4fb0');}ctx.restore();
-    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(px+0.4,py,0.6,11);
+    barberPole(X+w-6,top+20);
   },
   izakaya(X,w,r){ // 居酒屋：木の外壁・黒い看板に白い字・大きな赤ちょうちん・紺ののれん・ビールケース
     const top=body(X,w,35,'#4a3a2c');for(let k=0;k<w;k+=3)F(X+k,top+2,0.4,33,'#3a2c20');upWin(X+5,top+4,12,6,r());
@@ -2238,8 +2240,9 @@ const SHOPDRAW={
   },
 };
 function cityShops(d){
-  tileR(d,SHOP_SPAN,b=>{let x=b;
-    SHOP_ROW.forEach(([k,w],i)=>{if(x<330&&x+w>-10)SHOPDRAW[k](x,w,seeded(523+i*97));x+=w+2;});});
+  stripDraw('shops',d,SHOP_SPAN,60,138,()=>{let x=0;SHOP_ROW.forEach(([k,w],i)=>{SHOPDRAW[k](x,w,seeded(523+i*97));x+=w+2;});});
+  let bx=0;for(const [k,w] of SHOP_ROW){if(k==='barber')break;bx+=w+2;}const bw=SHOP_ROW.find(r=>r[0]==='barber')[1];
+  tileR(d,SHOP_SPAN,b=>{const X=b+bx;if(X>-10&&X<330)barberPole(X+bw-6,137-34+20);});
 }
 function citySide(d,endX=Infinity){ // 一般道：商店街の店先・電柱と電線・歩道・柵・信号（endX＝一般道の終わり。そこに最後の電柱を立てて電線をつなぐ）
   cityShops(d);   // 店先（店ごとに作りこんだ並び）
@@ -2393,7 +2396,7 @@ function hillTown(off,base,seed,span=360){ // 横浜の丘にびっしり並ぶ�
   const Hs=[];for(let x=0;x<span;x+=5+r()*3){Hs.push([x,4+r()*3,3+r()*2,pick2(r,['#efe6d6','#e4ddd2','#d9d4cc','#f2efe8','#e8e0e8']),pick2(r,['#7a3b2e','#3d4a5e','#5a5a62','#2f5a4a','#8a6a4a'])]);}
   const Dn=[];for(let x=20;x<span;x+=60+r()*40)Dn.push([x,18+r()*12,8+r()*4]);
   const hy=(x0,x1)=>{let m=-1e9;for(let x=x0;x<=x1;x+=2)m=Math.max(m,P[Math.max(0,Math.min(P.length-1,(x/4)|0))]);return m;}; // その幅でいちばん低い地面
-  tile(off,span,b=>{ctx.fillStyle='#7a9a66';ctx.beginPath();ctx.moveTo(b,base+20);P.forEach((y,i)=>ctx.lineTo(b+i*4,y));ctx.lineTo(b+span,base+20);ctx.fill();
+  stripDraw('hill'+seed+'_'+base+'_'+span,off,span,base-70,base+20,()=>{const b=0;ctx.fillStyle='#7a9a66';ctx.beginPath();ctx.moveTo(b,base+20);P.forEach((y,i)=>ctx.lineTo(b+i*4,y));ctx.lineTo(b+span,base+20);ctx.fill();
     for(const [x,w,h] of Dn){const top=P[Math.min(P.length-1,(x/4)|0)]+2-h,X=b+x,bot=hy(x,x+w)+8;F(X,top,w,bot-top,'#e8e4da');F(X+w-1.4,top,1.4,bot-top,'#c8c2b4');for(let yy=top+1.4;yy<bot-1;yy+=2.2)F(X+0.8,yy,w-2.6,0.7,'#9aa8b4');stxt(String(1+(x|0)%9),X+w/2,top+1.6,1.6,'#6a7480');}
     for(const [x,w,h,wc,rc] of Hs){const y=P[Math.min(P.length-1,(x/4)|0)];for(let row=0;row<3;row++){const yy=y+2+row*5.5;if(yy>base+2)break;const X=b+x+row*2;
       F(X,yy,w,h,wc);poly([[X-0.6,yy],[X+w/2,yy-2],[X+w+0.6,yy]],rc);F(X+1,yy+1,1,1,'#8fb2cc');}}});
@@ -2555,10 +2558,21 @@ function forestHills(off,base,amp,col,seed,span=360){ // 丸い森の丘：グ�
   });
 }
 // 低いビルと家の混ざった街並み
+// 遠くの街並みは窓が多くて重いので、1回だけ別のキャンバスに描いて使い回す（画面の拡大率が変わったら描き直す）
+const STRIP={};
+function stripDraw(key,off,span,top,bot,fn){
+  if(window.__noStrip){tile(off,span,b=>{ctx.save();ctx.translate(Math.round(b),0);fn();ctx.restore();});return;}   // 比較テスト用
+  const t=ctx.getTransform(),sc=Math.min(4,Math.round(Math.hypot(t.a,t.b)*1000)/1000);let e=STRIP[key];   // 小数のわずかな違いで作り直さないよう丸める。細かさは最大4倍（スマホのメモリ対策）   // 小数のごくわずかな違いで毎回作り直さないよう丸める
+  if(!e||e.sc!==sc){for(const k in STRIP)if(G.time-STRIP[k].used>900||STRIP[k].sc!==sc){STRIP[k].c.width=0;delete STRIP[k];}   // しばらく使っていない画像は捨てる（スマホのメモリ対策）
+    const c=document.createElement('canvas'),w=span+60;c.width=Math.ceil(w*sc);c.height=Math.ceil((bot-top)*sc);const g=c.getContext('2d');g.scale(sc,sc);g.translate(20,-top);
+    const m=ctx;ctx=g;try{fn();}finally{ctx=m;}e=STRIP[key]={c,sc,w,used:G.time};}
+  e.used=G.time;
+  const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;tile(off,span,b=>{if(b-20<330&&b-20+e.w>-10)ctx.drawImage(e.c,Math.round(b)-20,top,e.w,bot-top);});ctx.imageSmoothingEnabled=sm;
+}
 function town(off,base,seed,hMax,span=300,cols){
   const r=seeded(seed),B=[];let x=0;cols=cols||['#e4ddd0','#d8dde3','#efe9dc','#cfd4d8','#e8e0d4'];
   while(x<span){const kind=r();const w=kind<0.35?10+r()*8:8+r()*10,h=kind<0.35?6+r()*4:8+r()*hMax;B.push([x,w,h,pick2(r,cols),kind<0.35,(r()*1e6)|0]);x+=w+r()*3;}
-  tile(off,span,b=>{for(const [bx,w,h,c,house,s] of B){const X=b+bx;if(X>322||X+w<-2)continue;
+  stripDraw('t'+seed+'_'+base+'_'+hMax+'_'+span+'_'+cols.join(''),off,span,base-hMax-14,base+1,()=>{const b=0;for(const [bx,w,h,c,house,s] of B){const X=b+bx;
     if(house){rect(X,base-h,w,h,c);rect(X+w-2,base-h,2,h,shade(c,-22));poly([[X-1,base-h],[X+w/2,base-h-4],[X+w+1,base-h]],pick2(seeded(s),['#6a4a40','#4a5466','#5a5a5e']));rect(X+2,base-h+2,2,2,'#8fb2cc');}
     else bldg(X,base,w,h,c,s,0.08);}});
 }
@@ -2627,15 +2641,18 @@ function shinkansen(off,base,speed){ // 新幹線の高架と、走る白い車�
   const xe=x+8*26-1;rect(xe,base-4,8,4,'#f4f6f8');poly([[xe+14,base],[xe,base-6],[xe,base]],'#f4f6f8');rect(xe,base-1.8,12,1,'#2a56b8');rect(xe+1,base-5,4,1.2,'#3a4a60');
 }
 function teaField(off,base,seed){ // 茶畑のうね
-  tile(off,300,b=>{ctx.fillStyle='#7fa356';ctx.beginPath();ctx.ellipse(b+150,base,160,26,0,Math.PI,0);ctx.fill();
+  stripDraw('tea'+base,off,300,base-28,base+1,()=>{const b=0;ctx.fillStyle='#7fa356';ctx.beginPath();ctx.ellipse(b+150,base,160,26,0,Math.PI,0);ctx.fill();
     for(let k=0;k<6;k++){const y=base-23+k*4;ctx.fillStyle=k%2?'#2f6b2f':'#3c7d38';const hw=Math.sqrt(Math.max(0,1-Math.pow((base-y)/26,2)))*156;
       for(let x=b+150-hw;x<b+150+hw;x+=7){ctx.beginPath();ctx.ellipse(x,y,3.4,1.8,0,0,7);ctx.fill();}}});
 }
-function mikan(off,base){ // みかん畑（段々の斜面にオレンジの実）
-  tile(off,260,b=>{ctx.fillStyle='#6f9a4a';ctx.beginPath();ctx.moveTo(b,base);ctx.quadraticCurveTo(b+130,base-40,b+260,base);ctx.fill();
-    for(let k=0;k<5;k++){const y=base-4-k*6;for(let x=b+20+k*14;x<b+240-k*14;x+=9){ctx.fillStyle='#2f6a32';ctx.beginPath();ctx.arc(x,y,3.4,0,7);ctx.fill();
+function mikan(off,base){ // みかん畑（段々の斜面にオレンジの実）。木は丘の中に収める
+  stripDraw('mikan2'+base,off,260,base-46,base+1,()=>{const b=0,hy=x=>{const u=(x-b)/260;return base-4*u*(1-u)*36;};   // 丘の高さ（まん中で36）
+    ctx.fillStyle='#6f9a4a';ctx.beginPath();ctx.moveTo(b-30,base);for(let x=b-30;x<=b+290;x+=4)ctx.lineTo(x,Math.min(base,hy(x)+ (x<b||x>b+260?0:0)));ctx.lineTo(b+290,base);ctx.fill();
+    ctx.fillStyle='#62904a';for(let k=1;k<6;k++){for(let x=b;x<b+260;x+=2)if(hy(x)<base-k*6)ctx.fillRect(x,base-k*6,2,0.5);}   // 段々のすじ（丘の中だけ）
+    for(let k=0;k<5;k++){const y=base-4-k*6;for(let x=b+8;x<b+252;x+=9){if(hy(x)>y-4)continue;ctx.fillStyle='#2f6a32';ctx.beginPath();ctx.arc(x,y,3.4,0,7);ctx.fill();
       ctx.fillStyle='#ff9a1f';ctx.fillRect(x-1,y-1,1.4,1.4);ctx.fillRect(x+1.2,y+0.6,1.2,1.2);}}});
 }
+
 function soundWall(d){const off=d%30;rect(0,104,320,31,'rgba(170,190,205,.5)');for(let x=-off;x<320;x+=30)rect(x,104,2,31,'#7d8796');rect(0,104,320,2,'#9aa4b2');}
 
 Object.assign(BGS,{
@@ -2906,6 +2923,7 @@ Object.assign(BGS,{
     skyC();cloudC();
     ridge(o*0.04,110,20,'#6f8fa8',191,600,true);
     seaBand(108,124,'#4a8fc4',o*0.15);noriPoles(o*0.15,112,123);
+    groundBand(123,'#7fa356');
     mikan(o*0.25,135);
   },
   toyokawa(o){ // 豊川：本宮山・平野のビニールハウス・新幹線
@@ -3032,6 +3050,7 @@ function drawTunnelBack(){
     if(x0>-60&&x0<W)txt(t.name,x0-4,58,9,'#ffffff','right');
   }
 }
+let TUN_GLOW=null;
 function tunnelInside(a,b,dd){ // トンネルの中：暗い天井・ジェットファン・オレンジの照明の列・灯りの当たる壁・白い内装板・非常電話と消火栓
   const F2=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
   {const g=ctx.createLinearGradient(0,0,0,70);g.addColorStop(0,'#141418');g.addColorStop(1,'#2e2c2c');ctx.fillStyle=g;ctx.fillRect(a,0,b-a,70);}   // 天井
@@ -3045,7 +3064,8 @@ function tunnelInside(a,b,dd){ // トンネルの中：暗い天井・ジェッ�
     ctx.fillStyle='#2a2b30';ctx.beginPath();ctx.ellipse(x,25,3,7,0,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(x+52,25,3,7,0,0,7);ctx.fill();}
   // 照明（ナトリウム灯）：灯具は明るく、下の壁にオレンジの光
   const lo=dd%44;ctx.save();ctx.globalCompositeOperation='lighter';
-  for(let x=a-lo;x<b+20;x+=44){const g=ctx.createRadialGradient(x+7,62,1,x+7,70,34);g.addColorStop(0,'rgba(255,180,80,.7)');g.addColorStop(1,'rgba(255,120,30,0)');ctx.fillStyle=g;ctx.fillRect(x-30,50,74,80);}
+  if(!TUN_GLOW){const c=document.createElement('canvas');c.width=148;c.height=160;const g2=c.getContext('2d'),g=g2.createRadialGradient(74,24,2,74,40,68);g.addColorStop(0,'rgba(255,180,80,.7)');g.addColorStop(1,'rgba(255,120,30,0)');g2.fillStyle=g;g2.fillRect(0,0,148,160);TUN_GLOW=c;}
+  for(let x=a-lo;x<b+20;x+=44)ctx.drawImage(TUN_GLOW,x-30,50,74,80);   // 光は1回だけ作った画像を使い回す（軽くするため）
   ctx.restore();
   for(let x=a-lo;x<b+20;x+=44){F2(x-1,57,16,6,'#2a2826');F2(x,58.5,14,4,'#ffb040');F2(x+1,59,12,2.4,'#ffe08a');F2(x+3,59.4,8,1.2,'#fffbe8');}
   // 非常電話・消火栓（緑の非常口サイン）
@@ -3060,19 +3080,30 @@ function drawTunnelFront(){ // 中では少しだけオレンジっぽく暗く�
 // 背景の切り替え：前は2つの景色を半透明で重ねていたので、富士山が海に透けるなど崩れて見えた。
 // いまは新しい景色を別のキャンバスに描き、境目（ぼかし幅70）から右だけを重ねる。境目は右端から左へ流れていく
 let WIPE=null;
-function wipe(drawFn,bx,rightSide){
+function wipe(drawFn,bx,rightSide){ // 新しい景色を、境目より右（または左）の部分だけ描いて重ねる（必要な幅だけ描いて軽く）
   const main=ctx;
   if(!WIPE){const c=document.createElement('canvas');WIPE={c,g:c.getContext('2d')};}
   const c=WIPE.c;if(c.width!==cv.width||c.height!==cv.height){c.width=cv.width;c.height=cv.height;}
-  const g=WIPE.g;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,c.width,c.height);g.setTransform(main.getTransform());g.imageSmoothingEnabled=false;
-  ctx=g;try{drawFn();}finally{ctx=main;}
+  const t=main.getTransform(),x0=rightSide?bx-26:-10,x1=rightSide?330:bx+26;
+  const dx0=Math.max(0,Math.floor(t.a*x0+t.e)),dx1=Math.min(c.width,Math.ceil(t.a*x1+t.e));if(dx1<=dx0)return;
+  const g=WIPE.g;g.setTransform(1,0,0,1,0,0);g.clearRect(dx0,0,dx1-dx0,c.height);g.setTransform(t);g.imageSmoothingEnabled=false;
+  g.save();g.beginPath();g.rect(x0,-10,x1-x0,200);g.clip();
+  ctx=g;try{drawFn();}finally{ctx=main;g.restore();}
   const gr=g.createLinearGradient(bx-25,0,bx+25,0);
   gr.addColorStop(0,rightSide?'rgba(0,0,0,0)':'rgba(0,0,0,1)');gr.addColorStop(1,rightSide?'rgba(0,0,0,1)':'rgba(0,0,0,0)');
-  g.globalCompositeOperation='destination-in';g.fillStyle=gr;g.fillRect(-10,-10,340,200);g.globalCompositeOperation='source-over';
-  main.save();main.setTransform(1,0,0,1,0,0);main.drawImage(c,0,0);main.restore();
+  g.globalCompositeOperation='destination-in';g.fillStyle=gr;g.fillRect(x0,-10,x1-x0,200);g.globalCompositeOperation='source-over';
+  main.save();main.setTransform(1,0,0,1,0,0);main.drawImage(c,dx0,0,dx1-dx0,c.height,dx0,0,dx1-dx0,c.height);main.restore();
+}
+
+let WARMED=-1,WARM_C=null;
+function warmNext(o,km){ // 次の区間の街並みの画像を、境目の約2.5km手前で先に作っておく（入った瞬間に引っかからないように）
+  const k=SECTIONS.findIndex(s=>s.km>km);if(k<0||k===WARMED||SECTIONS[k].km-km>2.5)return;WARMED=k;
+  if(!WARM_C){WARM_C=document.createElement('canvas');WARM_C.width=WARM_C.height=2;}
+  const g=WARM_C.getContext('2d'),m=ctx;g.setTransform(m.getTransform());ctx=g;try{const s=SECTIONS[k];BGS[s.bg](o,0);}catch(e){}finally{ctx=m;}
 }
 function drawScenery(){
   const km=G.km,o=km*PXKM/BG,draw=k=>{const s=SECTIONS[k];BGS[s.bg](o,(km-s.km)*PXKM/BG);};
+  if(G.mode==='play')warmNext(o,km);
   // 境目（区間の始まり＋0.6km）は、いもっちと同じ速さで流れる手前の法面・森・マンションの後ろ
   const seamKm=k=>SECTIONS[k].km+0.6,seamX=k=>(PX+(seamKm(k)-km)*PXKM)/BG;
   let cur=0,tk=-1;for(let k=1;k<SECTIONS.length;k++){if(seamKm(k)<=km)cur=k;const bx=seamX(k);if(tk<0&&bx>-180&&bx<500)tk=k;}
@@ -3741,12 +3772,12 @@ function draw(){
 
 let last=performance.now(),accum=0;
 function loop(now){
-  accum+=Math.min(100,now-last);last=now;
+  accum+=Math.min(100,now-last);last=now;let n=0;
   while(accum>=1000/60){
     try{if(!G.paused&&!G.freeze)update();}catch(e){console.error(e);if(G.p)G.p.inv=Math.min(G.p.inv||0,90);}
-    accum-=1000/60;
+    accum-=1000/60;n++;
   }
-  try{draw();}catch(e){console.error(e);}
+  if(n||G.paused||G.freeze||G.mode==='title'){try{draw();}catch(e){console.error(e);}}   // 120Hzの画面では、進まなかったコマは描かない（同じ絵を2回描かない）
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -3807,7 +3838,7 @@ function debugShot(name){
 if(/^#shot=/.test(location.hash))setTimeout(()=>debugShot(location.hash.slice(6)),50);
 function botRun(seed){newGame();for(let i=0;i<540;i++)update();let n=0;while(G.mode==='play'&&n<60*600){debugBot();update();n++;}
   return {mode:G.mode,km:+G.km.toFixed(1),t:+(G.rt/60).toFixed(1),hits:G.hits,caught:G.caughtN,red:G.redN,smash:G.smashed,gap:+(G.grbKm-G.km).toFixed(1)};}
-window.__imo2={fs:()=>fsCalls,sprites:()=>({CHAR,CHAR_BARE,CHAR_BURNT}),ai:()=>AI_READY,bot:botRun,G,shot:debugShot,key,step:n=>{for(let i=0;i<n;i++)update();},draw:()=>draw(),start:()=>startIfIdle(),jump:()=>{jumpPressed=true;},hold:b=>{key.jump=b;}}; // テスト用（コマ送り）
+window.__imo2={bgs:()=>BGS,hw:(d)=>hwRoad(d),scn:()=>drawScenery(),fs:()=>fsCalls,sprites:()=>({CHAR,CHAR_BARE,CHAR_BURNT}),ai:()=>AI_READY,bot:botRun,G,shot:debugShot,key,step:n=>{for(let i=0;i<n;i++)update();},draw:()=>draw(),start:()=>startIfIdle(),jump:()=>{jumpPressed=true;},hold:b=>{key.jump=b;}}; // テスト用（コマ送り）
 })();
 </script>
 </body>
