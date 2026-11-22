@@ -1362,9 +1362,9 @@ function burst(x,y,col,n=10){for(let i=0;i<n;i++)G.fx.push({x,y,vx:rnd(-2.4,2.4)
 function banner(s,col){G.banner={s,t:0,col:col||'#ffd27a'};}
 // GRBの走る速さ（街はのんびり、料金所でゆっくり、高速は約100km/h）
 function grbTarget(km){
-  if(km<TOLL_KM-0.8)return 44;
-  if(km<TOLL_KM+0.5)return 18;
-  if(km>GOAL_KM-10)return 46;
+  if(km<TOLL_KM-0.8)return 60;
+  if(km<TOLL_KM+0.5)return 30;
+  if(km>GOAL_KM-10)return 60;
   if(inJam(km))return 70;
   return 115+8*Math.sin(km/9);
 }
@@ -2086,7 +2086,7 @@ function intro(){
   if(t>=175&&t<205){y.say=null;y.x=y.x0+(grbX()+36-y.x0)*(t-174)/30;y.walk+=1.6;}  // 運転席のドア（前のドア）まで歩く
   if(t>=205&&t<225)y.a=Math.max(0,1-(t-205)/20);              // 乗り込む
   if(t===225){y.a=0;sfx('bar');addText(grbX()+70,180,'バタン','#ffffff');}
-  if(t>=250)G.grbV=Math.min(44,G.grbV+0.7);
+  if(t>=250)G.grbV=Math.min(60,G.grbV+0.7);
   G.grbKm+=G.grbV/KMF;
   if(t===250){sfx('vroom');addText(grbX()+40,170,'ブォン！','#ffffff');}
   if(t===275)G.say={s:'え？',t:0};
