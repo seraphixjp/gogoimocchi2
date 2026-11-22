@@ -1412,7 +1412,7 @@ function update(){
   if(G.grbKm>=GOAL_KM){lose();return;}
   // 区間が変わったら案内
   const si=secAt(G.km);
-  if(si!==G.sec){G.sec=si;snd('stage');banner(SECTIONS[si].name);bgmSet(songFor());}
+  if(si!==G.sec){G.sec=si;snd('stage');banner(SECTIONS[si].name);bgmSet(songFor());if(si>0)G.ciQ.unshift([SECTIONS[si].name,null,'loc']);} // 現在地はつぶやきの場所に（次の順番で）
   if(!G.flags.honmura&&G.km>=HONMURA_KM-1.5){G.flags.honmura=true;banner('本村IC から高速へ！','#9fe0a0');}
   if(!G.flags.toll&&G.km>=TOLL_KM+0.6){G.flags.toll=true;banner('高速道路突入！','#ffd23a');G.bannerQ=['東名高速 名古屋まで '+Math.round(GOAL_KM-G.km)+'km'];snd('stage');G.say={s:'いくぞー！！',t:0};bgmSet(songFor());}
   if(!G.flags.jam&&G.km>=JAM_A-0.6){G.flags.jam=true;banner('渋滞発生！ 御殿場IC付近','#ff9a5a');G.bannerQ=['車の屋根を渡っていけ！'];G.say={s:'渋滞だー！屋根を渡るしかない！',t:0};snd('stage');}
@@ -1621,22 +1621,29 @@ const CARIN=[
   [305,'取材の人に、いもっちのこと紹介するね！','その前にオレを拾ってー！'],
   [322,'着いたら味噌カツ食べよっか！','オレも食べたいー！'],
   [335,'ナビが「まもなく目的地」だって！','オレのナビは足だー！']];
-function carIn(s,reply){if(G.phone||G.photoT>0||(G.inCar&&G.inCar.t<200)){(G.ciQ||(G.ciQ=[])).push([s,reply]);if(G.ciQ.length>2)G.ciQ.shift();return;}G.inCar={s,reply,t:0};}
+function carIn(s,reply){if(G.phone||G.photoT>0||(G.inCar&&G.inCar.t<200)){(G.ciQ||(G.ciQ=[])).push([s,reply]);if(G.ciQ.length>3){const i=G.ciQ.findIndex(q=>q[2]!=='loc');G.ciQ.splice(i<0?0:i,1);}return;}G.inCar={s,reply,t:0};} // あふれたら古いつぶやきから捨てる（現在地は残す）
 function carInEv(k,s,reply){if(G.flags['ev'+k]||G.mode!=='play')return;G.flags['ev'+k]=true;carIn(s,reply);} // 出来事に反応（1回だけ）
 const bannerOn=()=>!!(G.banner&&G.banner.t<150);
 const panelN=()=>(bannerOn()?1:0)+(G.news?1:0)+(G.inCar||G.phone?1:0); // 上の表示の数（見出し・速報・車内か電話）
 function carInUpdate(){
   for(const [km,s,r] of CARIN)if(!G.flags['ci'+km]&&G.km>=km){G.flags['ci'+km]=true;if(G.grbStop<=0)carIn(s,r);}
-  if(!G.inCar&&!G.phone&&G.photoT<=0&&panelN()<2&&G.ciQ&&G.ciQ.length){const [s,r]=G.ciQ.shift();G.inCar={s,reply:r,t:0};}
+  if(!G.inCar&&!G.phone&&G.photoT<=0&&panelN()<2&&G.ciQ&&G.ciQ.length){const [s,r,k]=G.ciQ.shift();G.inCar={s,reply:r,t:0,loc:k==='loc'};}
   const c=G.inCar;if(!c)return;
   c.t++;
   if(c.t===120&&c.reply&&G.caught<=0)G.say={s:c.reply,t:0,big:true};
-  if(c.t>260)G.inCar=null;
+  if(c.t>(c.loc?150:260))G.inCar=null;
 }
 function drawCarIn(){ // v19：文字を大きく（9→13px）
   const c=G.inCar;if(!c||G.mode!=='play')return;
-  const a=Math.min(1,c.t/10,(260-c.t)/15);ctx.globalAlpha=Math.max(0,a);
+  const dur=c.loc?150:260,a=Math.min(1,c.t/10,(dur-c.t)/15);ctx.globalAlpha=Math.max(0,a);
   const JF=px=>`bold ${px}px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif`;
+  if(c.loc){ // 現在地（地図のピン＋地名）
+    ctx.font=JF(14);const w=Math.ceil(ctx.measureText(c.s).width)+52,x=W-6-w,y=112,h=34;
+    ctx.fillStyle='rgba(10,12,24,.82)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#7dff8a';ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
+    ctx.fillStyle='#e8402c';ctx.beginPath();ctx.arc(x+20,y+14,7,Math.PI*0.85,Math.PI*2.15);ctx.lineTo(x+20,y+28);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(x+20,y+14,2.8,0,7);ctx.fill();
+    ctx.textAlign='left';ctx.textBaseline='middle';ctx.font=JF(9);ctx.fillStyle='#7dff8a';ctx.fillText('現在地',x+36,y+9);
+    ctx.font=JF(14);ctx.fillStyle='#ffffff';ctx.fillText(c.s,x+36,y+23);ctx.globalAlpha=1;return;}
   ctx.font=JF(13);const w=Math.min(W-150,Math.ceil(ctx.measureText(c.s).width)+52),x=W-6-w,y=112,h=34;
   ctx.fillStyle='rgba(10,12,24,.82)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ff9ad2';ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
   rect(x+3,y+3,40,28,'#3a3f5a');ctx.drawImage(YOSHI.idle,0,0,CW,30,x+4,y+3,CW*0.93,28);
@@ -1981,7 +1988,7 @@ function intro(){
   if(t===275)G.say={s:'え？',t:0};
   if(t===330){G.say={s:'ちょっ…置いてかないでー！！',t:0};snd('honk');snd('jump');}
   if(t>=330&&t<350)G.p.y=GROUND-FOOT-Math.round(Math.sin((t-330)/20*Math.PI)*16);else if(t===350)G.p.y=GROUND-FOOT; // ぴょこっと跳ねる
-  if(t===395){G.say=null;banner('よしちゃんに追いつけ！');G.bannerQ=['名古屋に着かれる前に！'];snd('stage');bgmStart(0);}
+  if(t===395){G.say=null;banner('名古屋に着く前によしちゃんに追いつけ！');G.bannerQ=[];snd('stage');bgmStart(0);}
   if(G.banner)G.banner.t++;
   if(t>=430){G.mode='play';G.say=null;G.v=START_V;pauseBtn.hidden=false;snd('jump');}
 }
@@ -2817,7 +2824,6 @@ function drawHUD(){
     rect(20+i*15,45,13,7,'rgba(13,16,32,.6)');if(lv>0)rect(21+i*15,46,Math.round(11*lv),5,G.water<WATER_MAX*0.2?'#ff8a6a':lv<1?'#6fa8d8':'#3fb6ff');}
   if(G.mode==='play'&&G.water<WATER_MAX*0.2&&((G.time/15)|0)%2)txt(G.water<=0?'水分ぎれ！減速中':'水分が少ない！',98,49,9,'#ff9a9a');
   if(G.grbStop>0&&G.mode==='play')txt(`よしちゃん ${G.grbSA.n}SAで休憩中！ あと${Math.ceil(G.grbStop/60)}秒`,W-8,48,10,'#ffe14d','right');
-  txt(`現在地：${SECTIONS[secAt(G.km)].name}`,W-8,32,9,'#cfe0ff','right');
   // 左下：スピードメーター
   const v=Math.round(G.mode==='play'?G.V||G.v:G.v),over=G.v>LIMIT||G.red>0;
   ctx.fillStyle='rgba(10,12,24,.6)';ctx.fillRect(6,H-40,132,34);
@@ -3167,12 +3173,13 @@ function debugShot(name){
   newGame();
   if(name==='cars1'||name==='cars2'||name==='cars3'||/^cmp\d$/.test(name)){G.mode=name;G.freeze=true;return;}
   if(name==='title'||name==='title2'||name==='title3'){G.mode='title';G.time=name==='title'?44:name==='title3'?300:150;G.km=name==='title'?0:100;G.freeze=true;return;}
-  if(/^intro/.test(name)){const n={intro:30,intro2:260,intro3:450,intro4:300,intro5:322,intro6:447}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
+  if(/^intro/.test(name)){const n={intro:30,intro2:260,intro3:450,intro4:300,intro5:322,intro6:447,intro7:520}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
   for(let i=0;i<540;i++)update();
   const sec=SECTIONS.find(x=>x.bg===name),kmm=/^km([\d.]+)$/.exec(name);
-  const tgt=kmm?+kmm[1]:sec?sec.km+5:{shoefire:40,shoesmoke:40,bare:40,clothfire:40,burnt:40,jam:71.5,koji:40,red:100,sastop:60,carsay:30,sa:23.9,sa2:25.4,fuji2:72,tunnel:167.4,bridge:180.3,city:4,honmura:8.3,toll:11.9,tanzawa:30,fuji:85,shizuoka:150,hamana:222,aichi:280,nagoya:321,cop:60,caught:60,clear:140,clear2:140,clear3:140,over:200,losephoto:200,over2:200,toll2:11.9,toll3:11.9,toll4:11.9,vms:(vmsKms()[0]-0.25),speed:14.2,signs:23.3,sain:25.1,fart:40,orbis:41,carin:20,carin2:20,seam1:61.6,seam2:91.6,seam3:127.5,seam4:5.9,dry:30,hitch:30,news:15.6,phone:52,local:240,goalphoto:140,totsuka:24,totsuka2:24,shinkan:215,prints:30,caught2:60,result:140}[name]||0;
+  const tgt=kmm?+kmm[1]:sec?sec.km+5:{shoefire:40,shoesmoke:40,loc:24,bare:40,clothfire:40,burnt:40,jam:71.5,koji:40,red:100,sastop:60,carsay:30,sa:23.9,sa2:25.4,fuji2:72,tunnel:167.4,bridge:180.3,city:4,honmura:8.3,toll:11.9,tanzawa:30,fuji:85,shizuoka:150,hamana:222,aichi:280,nagoya:321,cop:60,caught:60,clear:140,clear2:140,clear3:140,over:200,losephoto:200,over2:200,toll2:11.9,toll3:11.9,toll4:11.9,vms:(vmsKms()[0]-0.25),speed:14.2,signs:23.3,sain:25.1,fart:40,orbis:41,carin:20,carin2:20,seam1:61.6,seam2:91.6,seam3:127.5,seam4:5.9,dry:30,hitch:30,news:15.6,phone:52,local:240,goalphoto:140,totsuka:24,totsuka2:24,shinkan:215,prints:30,caught2:60,result:140}[name]||0;
   const adv=()=>{if(name!=='sastop')G.grbKm=Math.max(G.grbKm,G.km+4);G.water=WATER_MAX;G.p.inv=2;debugBot();update();};
   while(G.km<tgt&&G.mode==='play')adv();
+  if(name==='loc'){for(let i=0;i<9000&&!(G.inCar&&G.inCar.loc&&G.inCar.t>20);i++)adv();}
   if(name==='shoesmoke'){G.v=126;for(let i=0;i<70;i++){adv();G.v=Math.max(G.v,126);}}
   if(name==='shoefire'){G.v=132;for(let i=0;i<40;i++){adv();G.v=Math.max(G.v,132);}}
   if(name==='bare'){G.v=132;for(let i=0;i<10;i++){adv();G.v=Math.max(G.v,132);}G.v=100;for(let i=0;i<40;i++)adv();}
