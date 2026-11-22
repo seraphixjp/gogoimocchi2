@@ -2927,13 +2927,13 @@ function drawLogoRunner(){
   ctx.restore();
 }
 // ロゴの下：よしちゃんのGRBを追いかける小さい帯
-function titleSay(s,tx,ty){ // タイトルの小さい吹き出し（しっぽの先＝(tx,ty)＝いもっちの頭の上）
+function titleSay(s,hx,hy){ // タイトルの小さい吹き出し：いもっちの後ろ（左横）に出して、しっぽを頭（hx,hy）へ向ける。上のサブタイトルに重ならない
   ctx.font='bold 10px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';
-  const w=Math.ceil(ctx.measureText(s).width)+12,h=16;let x=Math.round(tx-w/2),y=Math.round(ty-h-6);x=Math.max(4,Math.min(W-w-4,x));
+  const w=Math.ceil(ctx.measureText(s).width)+12,h=16,x=Math.round(hx-w-8),y=Math.round(hy-4);
+  if(x<4||hx>W)return; // いもっちが画面に入りきっていない時は出さない
   ctx.fillStyle='#16121e';ctx.fillRect(x-1,y-1,w+2,h+2);ctx.fillStyle='#ffffff';ctx.fillRect(x,y,w,h);
-  const px=Math.max(x+5,Math.min(x+w-9,Math.round(tx)));
-  ctx.fillStyle='#16121e';ctx.fillRect(px-1,y+h,6,2);ctx.fillRect(px,y+h+2,4,2);ctx.fillRect(px+1,y+h+4,2,2);
-  ctx.fillStyle='#ffffff';ctx.fillRect(px,y+h,4,1);ctx.fillRect(px+1,y+h+1,2,2);
+  ctx.fillStyle='#16121e';ctx.fillRect(x+w,y+4,3,6);ctx.fillRect(x+w+3,y+5,2,4);ctx.fillRect(x+w+5,y+6,2,2);   // しっぽ（右＝いもっちの頭へ）
+  ctx.fillStyle='#ffffff';ctx.fillRect(x+w,y+5,2,4);ctx.fillRect(x+w+2,y+6,2,2);
   ctx.fillStyle='#1f44e6';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s,x+w/2,y+h/2+1);
 }
 function drawTitleChase(){
@@ -2947,7 +2947,7 @@ function drawTitleChase(){
   const ix=gx-84,spr=CHAR.run[((t/3)|0)%8];
   ctx.save();ctx.translate(Math.round(ix),gy-Math.round(FOOT*sc));ctx.scale(sc,sc);ctx.drawImage(spr,0,0);
   for(const [fx,fy] of firePoints(spr).feet)flame(fx,fy+1,2.4,t*0.6+fx);ctx.restore();
-  if(((t/90)|0)%2)titleSay(pick2(seeded(((t/180)|0)+3),['いわもとー！！','まってー！！','置いてかないでー！']),ix+24*sc,gy-Math.round(FOOT*sc)-4);
+  if(((t/90)|0)%2)titleSay(pick2(seeded(((t/180)|0)+3),['いわもとー！！','まってー！！','置いてかないでー！']),ix+12*sc,gy-Math.round(FOOT*sc)+4);
 }
 function drawTitle(){
   ctx.fillStyle='rgba(13,16,32,.5)';ctx.fillRect(0,0,W,H);
@@ -3154,7 +3154,7 @@ function debugBot(){const p=G.p;const rel=Math.max(0.9,G.v*K*0.45);
 function debugShot(name){
   newGame();
   if(name==='cars1'||name==='cars2'||name==='cars3'||/^cmp\d$/.test(name)){G.mode=name;G.freeze=true;return;}
-  if(name==='title'||name==='title2'){G.mode='title';G.time=name==='title'?44:150;G.km=name==='title'?0:100;G.freeze=true;return;}
+  if(name==='title'||name==='title2'||name==='title3'){G.mode='title';G.time=name==='title'?44:name==='title3'?300:150;G.km=name==='title'?0:100;G.freeze=true;return;}
   if(/^intro/.test(name)){const n={intro:30,intro2:260,intro3:450,intro4:300,intro5:322}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
   for(let i=0;i<540;i++)update();
   const sec=SECTIONS.find(x=>x.bg===name),kmm=/^km([\d.]+)$/.exec(name);
