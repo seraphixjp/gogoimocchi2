@@ -2018,11 +2018,69 @@ function clearScene(){
   if(t===phT()+170)snd('clear');
   if(t===phT()+260&&!/shot=/.test(location.hash)&&rankQualifies(G.result.time))rankOpenEntry(G.result.time); // 結果を1.5秒見せてから、10位以内の時だけ
 }
+
+// ---------- 一般道と料金所の前の道沿い（背景の座標＝320x180で描く。道路と同じ速さで流れる） ----------
+const TOLLAPP_KM=TOLL_KM-1.2;   // ここから先は料金所の前
+const SHOPS=['コンビニ','ラーメン','薬局','クリーニング','不動産','カフェ','居酒屋','床屋','本屋','花屋','弁当','歯科'];
+function citySide(d){ // 一般道：商店街の店先・電柱と電線・歩道・柵・信号
+  // 店先（2階建ての店が並ぶ）
+  tile(d,420,b=>{const r=seeded(311);let x=0,i=0;
+    while(x<420){const w=38+((r()*30)|0),h=26+((r()*12)|0),X=b+x,top=137-h;
+      if(r()<0.12){x+=w*0.6;continue;}                                                     // ところどころ駐車場のすき間
+      const wall=['#efe6d6','#e4e8ec','#f2dcc8','#dfe6da','#e8e0e8'][(r()*5)|0],sign=['#d8312b','#1f5fbf','#2a8a4a','#e88a1a','#6a3fa0','#16306a'][(r()*6)|0];
+      rect(X,top,w,h,wall);rect(X+w-3,top,3,h,shade(wall,-24));rect(X,top,w,1,shade(wall,18));
+      for(let k=0;k<2;k++)rect(X+4+k*(w/2),top+3,w/2-8,6,'#8fb2cc');                            // 2階の窓
+      rect(X+1,top+12,w-2,7,sign);ptxt(SHOPS[(i+((r()*12)|0))%SHOPS.length],X+w/2,top+15.8,5.2,'#ffffff','center'); // 看板
+      rect(X+2,top+19,w-4,2,shade(sign,-30));for(let k=0;k<w-4;k+=4)rect(X+2+k,top+19,2,2,shade(sign,20)); // 日よけ
+      rect(X+3,top+22,w-6,h-23,'#5f7d96');rect(X+3,top+22,w-6,1.5,'#a8c4da');rect(X+w/2-3,top+22,6,h-23,'#3f5568'); // ガラスの店先と入口
+      if(r()<0.35){rect(X+w-9,128,6,9,'#e8ecf0');rect(X+w-8,129,4,3,'#2a6fd6');rect(X+w-8,133,4,1,'#16161c');}   // 自販機
+      x+=w+2;i++;}});
+  // 歩道（タイル）と縁石
+  rect(0,137,320,6,'#c9c5bb');tile(d,8,b=>rect(b,137,0.6,6,'#b2aea4'));rect(0,140,320,0.5,'#b8b4aa');rect(0,142,320,1.5,'#e8e5de');
+  // 歩道の柵（白）
+  tile(d,150,b=>{for(let k=0;k<3;k++){const X=b+20+k*14;rect(X,133,1,5,'#f2f2f2');}rect(b+20,133,29,1,'#f2f2f2');rect(b+20,135.5,29,0.8,'#e0e0e0');});
+  // 電柱と電線
+  tile(d,140,b=>{const x=b+96;rect(x,70,2.2,68,'#9a9286');rect(x+1.6,70,0.6,68,'#7e776c');rect(x-6,76,14,1.5,'#7e776c');rect(x-4,82,10,1.2,'#7e776c');
+    rect(x-5,75,1.5,1.5,'#d8d8d8');rect(x+5.5,75,1.5,1.5,'#d8d8d8');rect(x+2.2,88,3,5,'#5a5a5e');
+    ctx.strokeStyle='rgba(40,40,48,.7)';ctx.lineWidth=0.4;for(const [oy,sag] of [[76,7],[78,9],[82,6]]){ctx.beginPath();ctx.moveTo(x,oy);ctx.quadraticCurveTo(x+70,oy+sag,x+140,oy);ctx.stroke();}});
+  // 信号（青）とバス停
+  tile(d,520,b=>{const x=b+300;rect(x,92,1.8,46,'#8a909a');rect(x+1.8,92,16,1.4,'#8a909a');rect(x+10,89,15,6,'#3a3f48');
+    rect(x+11.5,90.5,3,3,'#3fe08a');rect(x+16,90.5,3,3,'#4a3a2a');rect(x+20.5,90.5,3,3,'#4a2a2a');                // 青・黄・赤
+    rect(x+3,112,5,8,'#3a3f48');rect(x+4,117,3,2,'#3fe08a');                                                       // 歩行者用
+    const bx=b+180;rect(bx,116,1.2,21,'#8a909a');ctx.fillStyle='#2a6fd6';ctx.beginPath();ctx.arc(bx+0.6,115,4,0,7);ctx.fill();rect(bx-2,114.5,5,1,'#ffffff');}); // バス停
+}
+function streetMarks(d){ // 道路の上：横断歩道と停止線（信号の位置）
+  tile(d,520,b=>{const x=b+284;for(let y=147;y<173;y+=4)rect(x,y,13,2,'rgba(242,242,242,.85)');rect(x+15,147,1.5,13,'rgba(242,242,242,.85)');});
+}
+function tollSide(d){ // 料金所の前：遮音壁・植え込み・照明・ガードレール
+  rect(0,112,320,25,'#c4c9d0');tile(d,20,b=>{rect(b,112,0.8,25,'#a9aeb6');});rect(0,112,320,2,'#dfe3e8');rect(0,134,320,3,'#9aa0aa');
+  tile(d,60,b=>{ctx.fillStyle='#4f8a4a';ctx.beginPath();ctx.arc(b+10,113,6,Math.PI,0);ctx.arc(b+24,112,7,Math.PI,0);ctx.arc(b+40,113,6,Math.PI,0);ctx.fill();});
+  streetLights(d);guardrail(d);
+}
+function streetSide(d){ // 一般道と料金所の前の切りかえ（境目より手前は一般道、先は料金所の前）
+  if(G.km>GOAL_KM-8){citySide(d);return;}
+  const bx=kmX(TOLLAPP_KM)/BG;
+  if(bx>=320){citySide(d);return;}
+  if(bx<=0){tollSide(d);return;}
+  ctx.save();ctx.beginPath();ctx.rect(-4,0,bx+4,180);ctx.clip();citySide(d);ctx.restore();
+  ctx.save();ctx.beginPath();ctx.rect(bx,0,330-bx,180);ctx.clip();tollSide(d);ctx.restore();
+}
+function streetMarksAt(d){if(G.km>GOAL_KM-8||kmX(TOLLAPP_KM)/BG>0){const bx=G.km>GOAL_KM-8?320:Math.min(320,kmX(TOLLAPP_KM)/BG);ctx.save();ctx.beginPath();ctx.rect(-4,0,bx+4,180);ctx.clip();streetMarks(d);ctx.restore();}}
+// 料金所の前の案内（画面の座標）：料金所 500m・ETCレーンの案内板・ラバーポール・導流帯
+function tollApproach(){
+  if(G.km<TOLLAPP_KM-1.5||G.km>TOLL_KM+0.6)return;
+  {const x=kmX(TOLL_KM-1.3);if(x>-160&&x<W+20)icSign(x,58,'料金所','TOLL GATE','まもなく','up');}
+  // 路面：導流帯（白い斜線）とラバーポール
+  const a=kmX(TOLL_KM-0.5),b=kmX(TOLL_KM+0.3);
+  if(b>0&&a<W){ctx.save();ctx.beginPath();ctx.rect(Math.max(0,a),216,Math.min(W,b)-Math.max(0,a),10);ctx.clip();
+    ctx.strokeStyle='rgba(242,242,242,.8)';ctx.lineWidth=2;for(let x=a-((a%14)+14)%14;x<b+20;x+=14){ctx.beginPath();ctx.moveTo(x,226);ctx.lineTo(x+10,216);ctx.stroke();}ctx.restore();
+    for(let x=a;x<b;x+=18)if(x>-6&&x<W+6){rect(x,232,3,10,'#ff7a1a');rect(x,234,3,1.5,'#f4f4f4');rect(x,238,3,1.5,'#f4f4f4');rect(x-1,241,5,2,'#3a3a40');}}
+}
 function snapScene(){ // 今いる場所の景色（空・山・街・道路）だけを別のキャンバスに2倍で描いて写し取る（記念写真の背景）
   const c=document.createElement('canvas');c.width=W*2;c.height=H*2;const main=ctx;
   try{ctx=c.getContext('2d');ctx.scale(2,2);ctx.save();ctx.scale(BG,BG);drawScenery();
     const d=G.km*PXKM/BG;
-    if(G.km<TOLL_KM+0.4||G.km>GOAL_KM-8){streetLights(d);guardrail(d);road(d);}else{hwRoad(d);drawBridges(d);}
+    if(G.km<TOLL_KM+0.4||G.km>GOAL_KM-8){streetSide(d);road(d);streetMarksAt(d);}else{hwRoad(d);drawBridges(d);}
     ctx.restore();}catch(e){console.error(e);c.bad=true;}
   ctx=main;return c.bad?null:c;
 }
@@ -3140,11 +3198,11 @@ function draw(){
   ctx.save();ctx.scale(BG,BG);
   drawScenery();
   const d=G.km*PXKM/BG;
-  if(G.km<TOLL_KM+0.4||G.km>GOAL_KM-8){streetLights(d);guardrail(d);
+  if(G.km<TOLL_KM+0.4||G.km>GOAL_KM-8){streetSide(d);
     if(G.mode!=='title'&&G.km<HOME_KM+HOME_FADE_KM){const f=Math.max(0,(G.km-HOME_KM)/HOME_FADE_KM);if(f<=0)drawHome(d);else wipe(()=>drawHome(d),360-f*400,false);}
-    road(d);}else{hwRoad(d);drawBridges(d);}
+    road(d);streetMarksAt(d);}else{hwRoad(d);drawBridges(d);}
   ctx.restore();
-  if(G.mode!=='title'){drawTunnelBack();drawRoadside();bridgeSigns();}
+  if(G.mode!=='title'){drawTunnelBack();drawRoadside();tollApproach();bridgeSigns();}
   if(G.mode==='title'){drawTitle();ctx.restore();return;}
   drawGRB();drawCop();drawYoshi();
   drawBar();
