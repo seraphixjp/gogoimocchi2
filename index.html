@@ -1765,9 +1765,10 @@ function drawGoalPhoto(){
   ctx.save();ctx.translate(W/2,108);ctx.rotate(-0.03);
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(-104,-76,216,160);
   ctx.fillStyle='#f8f6ee';ctx.fillRect(-108,-80,216,160);
-  const g=ctx.createLinearGradient(0,-72,0,40);g.addColorStop(0,'#f6c48a');g.addColorStop(1,'#e8806a');ctx.fillStyle=g;ctx.fillRect(-100,-72,200,112);
-  ctx.fillStyle='#8a5a6a';for(let i=0;i<7;i++)ctx.fillRect(-100+i*30,-30+(i%3)*8,24,70);ctx.fillStyle='#ffd27a';for(let i=0;i<7;i++)for(let j=0;j<3;j++)ctx.fillRect(-94+i*30,-22+(i%3)*8+j*12,4,3);
-  ctx.fillStyle='#5a5a66';ctx.fillRect(-100,30,200,10);
+  const sc=G.result.scene;
+  if(sc){ctx.imageSmoothingEnabled=true;ctx.drawImage(sc,60*2,8*2,400*2,224*2,-100,-72,200,112);}   // 追いついた場所の景色
+  else{const g=ctx.createLinearGradient(0,-72,0,40);g.addColorStop(0,'#f6c48a');g.addColorStop(1,'#e8806a');ctx.fillStyle=g;ctx.fillRect(-100,-72,200,112);
+  ctx.fillStyle='#8a5a6a';for(let i=0;i<7;i++)ctx.fillRect(-100+i*30,-30+(i%3)*8,24,70);ctx.fillStyle='#5a5a66';ctx.fillRect(-100,30,200,10);}
   ctx.imageSmoothingEnabled=false;
   const CH2=G.cloth==='burnt'||G.cloth==='fire'?CHAR_BURNT:G.shoe==='bare'?CHAR_BARE:CHAR;
   ctx.drawImage(CH2.idle,-86,-60,CW*1.9,CH*1.9);ctx.drawImage(YOSHI.wave,-4,-62,CW*1.9,CH*1.9);
@@ -2005,8 +2006,16 @@ function clearScene(){
   if(t===phT()+170)snd('clear');
   if(t===phT()+260&&!/shot=/.test(location.hash)&&rankQualifies(G.result.time))rankOpenEntry(G.result.time); // 結果を1.5秒見せてから、10位以内の時だけ
 }
+function snapScene(){ // 今いる場所の景色（空・山・街・道路）だけを別のキャンバスに2倍で描いて写し取る（記念写真の背景）
+  const c=document.createElement('canvas');c.width=W*2;c.height=H*2;const main=ctx;
+  try{ctx=c.getContext('2d');ctx.scale(2,2);ctx.save();ctx.scale(BG,BG);drawScenery();
+    const d=G.km*PXKM/BG;
+    if(G.km<TOLL_KM+0.4||G.km>GOAL_KM-8){streetLights(d);guardrail(d);road(d);}else{hwRoad(d);drawBridges(d);}
+    ctx.restore();}catch(e){console.error(e);c.bad=true;}
+  ctx=main;return c.bad?null:c;
+}
 function win(){
-  G.mode='clear';G.overT=0;G.result={time:G.rt,km:G.km};bgmStop();snd('stomp');pauseBtn.hidden=true;
+  G.mode='clear';G.overT=0;G.result={time:G.rt,km:G.km,scene:snapScene()};bgmStop();snd('stomp');pauseBtn.hidden=true;
   G.say=null;G.yoshi={x:grbX()+60,a:0,say:null,walk:0};
   G.cars=G.cars.filter(c=>c.x+c.w<PX-6);G.items=[];G.cones=[];   // 追いついた場面が車で隠れないように
   if(!bestTime||G.rt<bestTime){bestTime=G.rt;G.result.best=true;try{localStorage.setItem('gogoimo2_best',bestTime);}catch(e){}}
