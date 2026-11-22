@@ -1976,7 +1976,7 @@ function intro(){
   G.grbKm+=G.grbV/KMF;
   if(t===250){sfx('vroom');addText(grbX()+40,170,'ブォン！','#ffffff');}
   if(t===275)G.say={s:'え？',t:0};
-  if(t===330){G.say={s:'ちょっ…置いてかないでー！！',t:0};snd('honk');snd('jump');addText(G.p.x+CW+22,G.p.y+14,'ぴょこっ！','#ffe14d');}
+  if(t===330){G.say={s:'ちょっ…置いてかないでー！！',t:0};snd('honk');snd('jump');}
   if(t>=330&&t<350)G.p.y=GROUND-FOOT-Math.round(Math.sin((t-330)/20*Math.PI)*16);else if(t===350)G.p.y=GROUND-FOOT; // ぴょこっと跳ねる
   if(t===395){G.say=null;banner('よしちゃんに追いつけ！');G.bannerQ=['名古屋に着かれる前に！'];snd('stage');bgmStart(0);}
   if(G.banner)G.banner.t++;
