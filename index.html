@@ -2709,7 +2709,7 @@ function drawGRB(){
     if(G.mode==='play'&&G.grbV>5&&G.time%4<2){ctx.fillStyle='rgba(200,200,210,.5)';ctx.fillRect(r.X-4,GROUND-14,3,2);}
   }else if(G.mode==='play'){
     const gap=G.grbKm-G.km;
-    txt(G.grbStop>0?`よしちゃん ${G.grbSA.n}SAで休憩中 ▶ ${gap.toFixed(1)}km`:`よしちゃん ▶ ${gap.toFixed(1)}km`,W-6,GROUND-60,10,'#ffe14d','right');
+    txt(G.grbStop>0?`よしちゃん ${G.grbSA.n}SAで休憩中 ▶ ${gap.toFixed(1)}km`:`よしちゃん ▶ ${gap.toFixed(1)}km`,W-6,PANEL_Y+48,10,'#ffe14d','right');
   }
 }
 function drawCop(){
