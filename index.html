@@ -2362,10 +2362,11 @@ function hillTown(off,base,seed,span=360){ // 横浜の丘にびっしり並ぶ�
   const r=seeded(seed),P=[];for(let x=0;x<=span;x+=4)P.push(base-14-10*Math.sin(x/span*6.283*2+seed)-5*Math.sin(x/span*6.283*5));
   const Hs=[];for(let x=0;x<span;x+=5+r()*3){Hs.push([x,4+r()*3,3+r()*2,pick2(r,['#efe6d6','#e4ddd2','#d9d4cc','#f2efe8','#e8e0e8']),pick2(r,['#7a3b2e','#3d4a5e','#5a5a62','#2f5a4a','#8a6a4a'])]);}
   const Dn=[];for(let x=20;x<span;x+=60+r()*40)Dn.push([x,18+r()*12,8+r()*4]);
+  const hy=(x0,x1)=>{let m=-1e9;for(let x=x0;x<=x1;x+=2)m=Math.max(m,P[Math.max(0,Math.min(P.length-1,(x/4)|0))]);return m;}; // その幅でいちばん低い地面
   tile(off,span,b=>{ctx.fillStyle='#7a9a66';ctx.beginPath();ctx.moveTo(b,base+20);P.forEach((y,i)=>ctx.lineTo(b+i*4,y));ctx.lineTo(b+span,base+20);ctx.fill();
+    for(const [x,w,h] of Dn){const top=P[Math.min(P.length-1,(x/4)|0)]+2-h,X=b+x,bot=hy(x,x+w)+8;F(X,top,w,bot-top,'#e8e4da');F(X+w-1.4,top,1.4,bot-top,'#c8c2b4');for(let yy=top+1.4;yy<bot-1;yy+=2.2)F(X+0.8,yy,w-2.6,0.7,'#9aa8b4');stxt(String(1+(x|0)%9),X+w/2,top+1.6,1.6,'#6a7480');}
     for(const [x,w,h,wc,rc] of Hs){const y=P[Math.min(P.length-1,(x/4)|0)];for(let row=0;row<3;row++){const yy=y+2+row*5.5;if(yy>base+2)break;const X=b+x+row*2;
-      F(X,yy,w,h,wc);poly([[X-0.6,yy],[X+w/2,yy-2],[X+w+0.6,yy]],rc);F(X+1,yy+1,1,1,'#8fb2cc');}}
-    for(const [x,w,h] of Dn){const y=P[Math.min(P.length-1,(x/4)|0)]+2,X=b+x;F(X,y-h,w,h,'#e8e4da');F(X+w-1.4,y-h,1.4,h,'#c8c2b4');for(let yy=y-h+1.4;yy<y-1;yy+=2.2)F(X+0.8,yy,w-2.6,0.7,'#9aa8b4');stxt(String(1+(x|0)%9),X+w/2,y-h+1.6,1.6,'#6a7480');}});
+      F(X,yy,w,h,wc);poly([[X-0.6,yy],[X+w/2,yy-2],[X+w+0.6,yy]],rc);F(X+1,yy+1,1,1,'#8fb2cc');}}});
 }
 function trainJR(off,base,len,body,stripe,speed,span=1100){ // 走る電車（off は背景のずれ。速さは G.time で）
   const x=((G.time*speed-off)%span+span)%span-300;for(let k=0;k<len;k++){const cx=x+k*17;if(cx<-20||cx>330)continue;F(cx,base-6,16.4,6,body);F(cx,base-3.4,16.4,1,stripe);for(let j=0;j<4;j++)F(cx+1.4+j*3.8,base-5,2.4,1.6,'#3a4a60');F(cx+2,base,3,1,'#2a2a2a');F(cx+11,base,3,1,'#2a2a2a');}
