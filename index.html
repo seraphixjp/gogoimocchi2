@@ -643,23 +643,25 @@ function drawSay(p,s){ // いもっちの吹き出し
 }
 
 // ---------- 1作目から：いもっちの家とメロンテニスクラブの住宅街（2作目のスタート地点。車庫の車は外に出ているので消した） ----------
+// 近い背景は、丸めて描く四角（rect）と丸めない線がずれてがたがたしないよう、置く位置を整数にそろえる
+function tileR(off,span,fn){tile(off,span,b=>fn(Math.round(b)));}
 function drawHome(d){
   sky(['#5aa6e0','#a6d4f2','#eef6f0']);
   sunGlow(250,34,8,'#fffbe6','rgba(255,250,220,.5)');
   cloudLayer(d*0.02,520,16,1,'#ffffff','#d2dfea',12);cloudLayer(d*0.04,430,44,0.6,'rgba(255,255,255,.85)','rgba(200,215,230,.85)',19);
   // 遠くの家並み（かすんだ屋根）と木
-  tile(d*0.08,300,b=>{const r=seeded(31);for(let x=0;x<300;x+=13+r()*8){const w=11+r()*8,h=7+r()*6,X=b+x;
+  tileR(d*0.08,300,b=>{const r=seeded(31);for(let x=0;x<300;x+=13+r()*8){const w=11+r()*8,h=7+r()*6,X=b+x;
     rect(X,117-h,w,h,'#c4ccd6');poly([[X-1,117-h],[X+w+1,117-h],[X+w/2,112-h]],['#8f7a70','#7a8796','#8a6e6e'][(r()*3)|0]);}});
   haze(96,118,'rgba(225,238,245,.55)');
   trees(d*0.12,260,119,'#5f8f5a',17,1.2);
   // 中くらいの距離の家（2階建て・瓦屋根・窓）
-  tile(d*0.22,360,b=>{const r=seeded(57);for(let x=0;x<360;x+=40+r()*14){const X=b+x,w=28+r()*8,h=16+r()*5,base=124;
+  tileR(d*0.22,360,b=>{const r=seeded(57);for(let x=0;x<360;x+=40+r()*14){const X=b+x,w=28+r()*8,h=16+r()*5,base=124;
     const wall=['#efe8dc','#e2e6ea','#f2e2cf','#dfe6dc'][(r()*4)|0],roof=['#5a6476','#7a4a3e','#4e5a4a','#6a5a52'][(r()*4)|0];
     rect(X,base-h,w,h,wall);rect(X+w-4,base-h,4,h,shade(wall,-22));
     poly([[X-3,base-h],[X+w+3,base-h],[X+w*0.7,base-h-8],[X+w*0.3,base-h-8]],roof);rect(X-3,base-h,w+6,1,shade(roof,-25));
     for(let k=0;k<2;k++){rect(X+4+k*12,base-h+4,6,4,'#8fb3cf');rect(X+4+k*12,base-h+4,6,1,'#cfe0ee');rect(X+4+k*12,base-h+11,6,4,'#8fb3cf');}}});
   // テニスクラブ（コート2面・緑の金網・照明・クラブハウス・看板）と、そのとなりの家並み
-  tile(d*0.4,720,b=>{
+  tileR(d*0.4,720,b=>{
     // いもっちの家：1階が車庫（シャッターが半分あいて青いスバルが見える）、その上に2階建て
     { const Hx=b+16,base=140,w=74;
       // 1階：車庫（コンクリートの土台・シャッター・玄関）
@@ -670,7 +672,7 @@ function drawHome(d){
       // 玄関（ドア・ひさし・表札・階段）
       rect(Hx+54,base-15,10,15,'#7a5236');rect(Hx+55,base-14,8,13,'#8c6244');rect(Hx+61,base-8,1,2,'#e8c060');
       rect(Hx+52,base-17,14,1.5,'#6a6e78');rect(Hx+52,base-1,14,1,'#b0aca4');
-      rect(Hx+66,base-13,7,4,'#f4f1e6');ctx.fillStyle='#2a2a30';ctx.font='bold 2.6px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('いもっち',Hx+69.5,base-11);
+      rect(Hx+65.4,base-15.4,4.6,11.4,'#8a7a60');F(Hx+65.8,base-15,3.8,10.6,'#f4f1e6');ctx.fillStyle='#2a2a30';ctx.font='bold 2.3px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';['い','も','っ','ち'].forEach((c,k)=>ctx.fillText(c,Hx+67.7,base-13.5+k*2.45)); // 縦長の表札（壁の中に収める）
       // 2階・3階（クリーム色の外壁・窓・ベランダ）
       const top=base-18-30;
       rect(Hx,top,w,30,'#f2e8d2');rect(Hx+w-5,top,5,30,'#d8ccb2');rect(Hx,top+14.5,w,1,'#dccfb4');
@@ -743,7 +745,7 @@ function drawHome(d){
     rect(H+70,128,4,6,'#c8202a');rect(H+71,127,2,1,'#e8484a');rect(H+71.5,134,1,6,'#7d8394');               // 赤いポスト
   });
   // 電柱と電線（手前）
-  tile(d*0.55,200,b=>{
+  tileR(d*0.55,200,b=>{
     const x=b+104;rect(x,78,2.2,62,'#9a9286');rect(x+1.6,78,0.6,62,'#7e776c');rect(x-6,84,14,1.5,'#7e776c');rect(x-4,90,10,1.2,'#7e776c');
     rect(x-5,83,1.5,1.5,'#d8d8d8');rect(x+5.5,83,1.5,1.5,'#d8d8d8');rect(x+2.2,96,3,5,'#5a5a5e');               // がいしと変圧器
     ctx.strokeStyle='rgba(40,40,48,.75)';ctx.lineWidth=0.4;
@@ -946,17 +948,19 @@ function recolorTorn(c,lv){ // 破れ目は線で：斜めの裂け目から白�
   const skin=hex2rgb(C.skin),skinD=hex2rgb(C.skinD),under=hex2rgb('#f2f0ea'),underD=hex2rgb('#c9c6bc'),edge=hex2rgb('#0f2290'),dirt=hex2rgb('#4a3e36');
   const key=i=>d[i]+','+d[i+1]+','+d[i+2],T=new Uint8Array(Wd*Hd); // 0=そのまま 1=下着 2=肌 3=汚れ
   const jag=(x,y)=>((x*928371+y*12377)>>>0)%3-1;                        // 裂け目のギザギザ
+  const armN=new Uint8Array(Wd*Hd),sk=key0=>key0===hexKey(C.skin)||key0===hexKey(C.skinD);  // 手前の腕（胸より下の肌）のまわり1マスは破らない＝袖口が下着で隠れない
+  for(let y=21;y<Hd;y++)for(let x=0;x<Wd;x++){const i=(y*Wd+x)*4;if(!d[i+3]||!sk(key(i)))continue;for(let v=y-1;v<=y+1;v++)for(let u=x-1;u<=x+1;u++)if(u>=0&&v>=0&&u<Wd&&v<Hd)armN[v*Wd+u]=1;}
   for(let y=0;y<Hd;y++)for(let x=0;x<Wd;x++){const i=(y*Wd+x)*4;if(!d[i+3])continue;const k=key(i);
     const gray=Math.abs(d[i]-d[i+1])<14&&Math.abs(d[i+1]-d[i+2])<20&&d[i]>120&&d[i]<215;
     if(TOWEL_KEYS.has(k)||(gray&&y>=13&&y<=21)){T[y*Wd+x]=y>=16?(x>=15&&x<=26?4:5):(x>=17&&x<=25?2:5);continue;}   // タオルが落ちた：下は青いえり・首の幅だけ肌・外は消す
     if(k===hexKey(C.white)&&y>=17&&y<=24){T[y*Wd+x]=4;continue;}          // 胸のロゴも破れてなくなる
     if(SHIRT_KEYS.has(k)){
-      const r1=Math.abs((x-15)-(y-19)*1.15+jag(x,y)*0.6)<1.3;             // 左肩→右のお腹への裂け目
-      const r2=lv>=2&&Math.abs((x-29)+(y-22)*0.9+jag(y,x)*0.6)<1.2;       // 6回：もう1本（右肩→左下）
+      const r1=Math.abs((x-29)+(y-21)*0.95+jag(x,y)*0.6)<1.3;             // 右の胸→左のお腹への裂け目（腕と同じ向きだと袖に重なるので逆の斜め）
+      const r2=lv>=2&&y>=27&&Math.abs((x-12)-(y-27)*1.1+jag(y,x)*0.6)<1.2; // 6回：左のお腹にもう1本
       const r3=lv>=2&&y===28+((x>>2)%2)&&x>17&&x<30;                       // 6回：横の裂け目
       const hem=y>=34-(lv>=2?2:0)&&((x+((x*7)%3))%4<(lv>=2?2:1));          // すそのギザギザ
       const sleeve=lv>=2&&y<=21&&x<=14;                                       // 6回：奥の肩だけ少しちぎれる（手前は腕とまざって見えなくなるので肌にしない）
-      if(sleeve)T[y*Wd+x]=2;else if(r1||r2||r3||hem)T[y*Wd+x]=1;
+      if(sleeve)T[y*Wd+x]=2;else if(armN[y*Wd+x]&&!hem)T[y*Wd+x]=0;else if(r1||r2||r3||hem)T[y*Wd+x]=1;
       else if(((x*31+y*17)>>>0)%41===0)T[y*Wd+x]=3;}
     else if(PANTS_KEYS.has(k)){
       const hb=((((x/3|0)+11)*73856093^((y/3|0)+77)*19349663)>>>0)%100;
@@ -2234,23 +2238,23 @@ const SHOPDRAW={
   },
 };
 function cityShops(d){
-  tile(d,SHOP_SPAN,b=>{let x=b;
+  tileR(d,SHOP_SPAN,b=>{let x=b;
     SHOP_ROW.forEach(([k,w],i)=>{if(x<330&&x+w>-10)SHOPDRAW[k](x,w,seeded(523+i*97));x+=w+2;});});
 }
 function citySide(d,endX=Infinity){ // 一般道：商店街の店先・電柱と電線・歩道・柵・信号（endX＝一般道の終わり。そこに最後の電柱を立てて電線をつなぐ）
   cityShops(d);   // 店先（店ごとに作りこんだ並び）
   // 歩道（タイル）と縁石
-  rect(0,137,320,6,'#c9c5bb');tile(d,8,b=>rect(b,137,0.6,6,'#b2aea4'));rect(0,140,320,0.5,'#b8b4aa');rect(0,142,320,1.5,'#e8e5de');
+  rect(0,137,320,6,'#c9c5bb');tileR(d,8,b=>rect(b,137,0.6,6,'#b2aea4'));rect(0,140,320,0.5,'#b8b4aa');rect(0,142,320,1.5,'#e8e5de');
   // 歩道の柵（白）
-  tile(d,150,b=>{for(let k=0;k<3;k++){const X=b+20+k*14;rect(X,133,1,5,'#f2f2f2');}rect(b+20,133,29,1,'#f2f2f2');rect(b+20,135.5,29,0.8,'#e0e0e0');});
+  tileR(d,150,b=>{for(let k=0;k<3;k++){const X=b+20+k*14;rect(X,133,1,5,'#f2f2f2');}rect(b+20,133,29,1,'#f2f2f2');rect(b+20,135.5,29,0.8,'#e0e0e0');});
   // 電柱と電線
   const pole=x=>{rect(x,70,2.2,68,'#9a9286');rect(x+1.6,70,0.6,68,'#7e776c');rect(x-6,76,14,1.5,'#7e776c');rect(x-4,82,10,1.2,'#7e776c');
     rect(x-5,75,1.5,1.5,'#d8d8d8');rect(x+5.5,75,1.5,1.5,'#d8d8d8');rect(x+2.2,88,3,5,'#5a5a5e');};
   const wires=(x0,x1)=>{const L=x1-x0;ctx.strokeStyle='rgba(40,40,48,.7)';ctx.lineWidth=0.4;for(const [oy,sag] of [[76,7],[78,9],[82,6]]){ctx.beginPath();ctx.moveTo(x0,oy);ctx.quadraticCurveTo(x0+L/2,oy+sag*L/140,x1,oy);ctx.stroke();}};
-  tile(d,140,b=>{const x=b+96;if(x>endX-6)return;pole(x);wires(x,Math.min(x+140,endX));});
+  tileR(d,140,b=>{const x=b+96;if(x>endX-6)return;pole(x);wires(x,Math.min(x+140,endX));});
   if(endX<330){pole(endX);if(endX>=-10&&endX<36){const x0=endX-140;wires(x0,endX);}}   // 一般道の終わり：最後の電柱（電線はここで終わる）
   // 信号（青）とバス停
-  tile(d,520,b=>{const x=b+300;rect(x,92,1.8,46,'#8a909a');rect(x+1.8,92,16,1.4,'#8a909a');rect(x+10,89,15,6,'#3a3f48');
+  tileR(d,520,b=>{const x=b+300;rect(x,92,1.8,46,'#8a909a');rect(x+1.8,92,16,1.4,'#8a909a');rect(x+10,89,15,6,'#3a3f48');
     rect(x+11.5,90.5,3,3,'#3fe08a');rect(x+16,90.5,3,3,'#4a3a2a');rect(x+20.5,90.5,3,3,'#4a2a2a');                // 青・黄・赤
     rect(x+3,112,5,8,'#3a3f48');rect(x+4,117,3,2,'#3fe08a');                                                       // 歩行者用
     const bx=b+180;rect(bx,116,1.2,21,'#8a909a');ctx.fillStyle='#2a6fd6';ctx.beginPath();ctx.arc(bx+0.6,115,4,0,7);ctx.fill();rect(bx-2,114.5,5,1,'#ffffff');}); // バス停
