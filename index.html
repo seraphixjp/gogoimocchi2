@@ -1624,28 +1624,30 @@ const CARIN=[
 function carIn(s,reply){if(G.phone||G.photoT>0||(G.inCar&&G.inCar.t<200)){(G.ciQ||(G.ciQ=[])).push([s,reply]);if(G.ciQ.length>3){const i=G.ciQ.findIndex(q=>q[2]!=='loc');G.ciQ.splice(i<0?0:i,1);}return;}G.inCar={s,reply,t:0};} // あふれたら古いつぶやきから捨てる（現在地は残す）
 function carInEv(k,s,reply){if(G.flags['ev'+k]||G.mode!=='play')return;G.flags['ev'+k]=true;carIn(s,reply);} // 出来事に反応（1回だけ）
 function locNote(name,label){const q=G.ciQ||(G.ciQ=[]);let i=q.findIndex(x=>x[2]!=='loc');if(i<0)i=q.length;q.splice(i,0,[name,null,'loc',label]);} // 地名（区間・川・トンネル）はつぶやきの場所へ。つぶやき・電話と順番待ち
+const PANEL_Y=76; // 右の枠（つぶやき・電話・地名・出来事）の高さ。前に真ん中の帯があった位置
 const bannerOn=()=>!!(G.banner&&G.banner.t<150);
 const panelN=()=>(bannerOn()?1:0)+(G.news?1:0)+(G.inCar||G.phone?1:0); // 上の表示の数（見出し・速報・車内か電話）
 function carInUpdate(){
   for(const [km,s,r] of CARIN)if(!G.flags['ci'+km]&&G.km>=km){G.flags['ci'+km]=true;if(G.grbStop<=0)carIn(s,r);}
-  if(!G.inCar&&!G.phone&&G.photoT<=0&&panelN()<2&&G.ciQ&&G.ciQ.length){const [s,r,k,lb]=G.ciQ.shift();G.inCar={s,reply:r,t:0,loc:k==='loc',lb};}
+  if(!G.inCar&&!G.phone&&G.photoT<=0&&!bannerOn()&&panelN()<2&&G.ciQ&&G.ciQ.length){const [s,r,k,lb]=G.ciQ.shift();G.inCar={s,reply:r,t:0,loc:k==='loc',lb};}
   const c=G.inCar;if(!c)return;
+  if(bannerOn())return;   // 出来事の見出しが出ている間は止めて待つ
   c.t++;
   if(c.t===120&&c.reply&&G.caught<=0)G.say={s:c.reply,t:0,big:true};
   if(c.t>(c.loc?150:260))G.inCar=null;
 }
 function drawCarIn(){ // v19：文字を大きく（9→13px）
-  const c=G.inCar;if(!c||G.mode!=='play')return;
+  const c=G.inCar;if(!c||G.mode!=='play'||bannerOn())return;
   const dur=c.loc?150:260,a=Math.min(1,c.t/10,(dur-c.t)/15);ctx.globalAlpha=Math.max(0,a);
   const JF=px=>`bold ${px}px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif`;
   if(c.loc){ // 現在地（地図のピン＋地名）
-    ctx.font=JF(14);const w=Math.ceil(ctx.measureText(c.s).width)+52,x=W-6-w,y=112,h=34;
+    ctx.font=JF(14);const w=Math.ceil(ctx.measureText(c.s).width)+52,x=W-6-w,y=PANEL_Y,h=34;
     ctx.fillStyle='rgba(10,12,24,.82)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#7dff8a';ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
     ctx.fillStyle='#e8402c';ctx.beginPath();ctx.arc(x+20,y+14,7,Math.PI*0.85,Math.PI*2.15);ctx.lineTo(x+20,y+28);ctx.closePath();ctx.fill();
     ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(x+20,y+14,2.8,0,7);ctx.fill();
     ctx.textAlign='left';ctx.textBaseline='middle';ctx.font=JF(9);ctx.fillStyle='#7dff8a';ctx.fillText(c.lb||'現在地',x+36,y+9);
     ctx.font=JF(14);ctx.fillStyle='#ffffff';ctx.fillText(c.s,x+36,y+23);ctx.globalAlpha=1;return;}
-  ctx.font=JF(13);const w=Math.min(W-150,Math.ceil(ctx.measureText(c.s).width)+52),x=W-6-w,y=112,h=34;
+  ctx.font=JF(13);const w=Math.min(W-150,Math.ceil(ctx.measureText(c.s).width)+52),x=W-6-w,y=PANEL_Y,h=34;
   ctx.fillStyle='rgba(10,12,24,.82)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ff9ad2';ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
   rect(x+3,y+3,40,28,'#3a3f5a');ctx.drawImage(YOSHI.idle,0,0,CW,30,x+4,y+3,CW*0.93,28);
   ctx.textAlign='left';ctx.textBaseline='middle';
@@ -1743,19 +1745,19 @@ const CALLS=[{km:52,steps:[[100,'box','ただいま運転中のため、電話�
   {km:318,steps:[[100,'box','ただいま運転中のため、電話に出られません'],[190,'say','…もういい！走って追いつく！'],[300,'end']]}];
 function phoneUpdate(){
   if(!G.phone){const i=CALLS.findIndex((c,k)=>!G.flags['call'+k]&&G.km>=c.km);
-    if(i>=0&&G.caught<=0&&!G.inCar&&G.photoT<=0&&G.red<=0&&!inJam(G.km)&&!(bannerOn()&&G.news)){G.flags['call'+i]=true;G.phone={i,t:0,box:null,who:''};G.say={s:'いわもとに電話だ！',t:0};snd('ring');}
+    if(i>=0&&G.caught<=0&&!G.inCar&&G.photoT<=0&&G.red<=0&&!inJam(G.km)&&!bannerOn()){G.flags['call'+i]=true;G.phone={i,t:0,box:null,who:''};G.say={s:'いわもとに電話だ！',t:0};snd('ring');}
     return;}
-  const ph=G.phone;ph.t++;
+  const ph=G.phone;if(bannerOn())return;ph.t++;
   for(const [t,kind,s] of CALLS[ph.i].steps)if(ph.t===t){
     if(kind==='box'){ph.box=s;ph.who='phone';}else if(kind==='yoshi'){ph.box=s;ph.who='yoshi';}
     else if(kind==='big')G.say={s,t:0,big:true};else if(kind==='say')G.say={s,t:0};else if(kind==='end')G.phone=null;}
 }
 function drawPhone(){
-  const ph=G.phone;if(!ph||G.mode!=='play')return;
+  const ph=G.phone;if(!ph||G.mode!=='play'||bannerOn())return;
   const JF=px=>`bold ${px}px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif`;
   const label=ph.box?(ph.who==='yoshi'?'いわもと（通話中）':'いわもと'):'いわもと（呼び出し中…）';
   ctx.font=JF(12);const tw=ph.box?ctx.measureText(ph.box).width:0;ctx.font=JF(9);
-  const w=Math.min(W-12,Math.max(ctx.measureText(label).width,tw)+44),x=W-6-w,y=112,h=34;
+  const w=Math.min(W-12,Math.max(ctx.measureText(label).width,tw)+44),x=W-6-w,y=PANEL_Y,h=34;
   ctx.fillStyle='rgba(10,12,24,.85)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#7dd0ff';ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
   // スマホの絵（呼び出し中はふるえる）
   const sh=!ph.box&&((G.time/3)|0)%2?1:0;rect(x+7+sh,y+5,18,25,'#2a2c34');rect(x+9+sh,y+8,14,18,ph.who==='yoshi'?'#7dff8a':'#7dd0ff');rect(x+14+sh,y+27,4,1.5,'#8a8e96');
@@ -2841,15 +2843,34 @@ function drawHUD(){
   }
 }
 function drawSayAny(p,s){drawSay(p,s);}
-function drawBanner(){
+function bannerKind(t){return /パトカー/.test(t)?'cop':/渋滞|屋根/.test(t)?'jam':/SA/.test(t)?'sa':/高速|IC|東名/.test(t)?'road':/よしちゃん/.test(t)?'yoshi':/逃げ切/.test(t)?'cop':'info';}
+function bannerIcon(k,x,y,t){ // 枠の左のアイコン（24x24）
+  const R2=(a,b,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(a,b,w,h);};
+  if(k==='cop'){ // パトランプ：赤いドームが光って、光の筋が回る
+    const on=((t/5)|0)%2;R2(x+3,y+18,18,4,'#2a2c34');R2(x+5,y+16,14,3,'#6a6e78');
+    ctx.fillStyle=on?'#ff3a2a':'#a8201a';ctx.beginPath();ctx.arc(x+12,y+16,7,Math.PI,0);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillRect(x+8,y+11,2,3);
+    if(on){ctx.strokeStyle='rgba(255,90,60,.85)';ctx.lineWidth=1.5;const a0=t/6;for(let i=0;i<3;i++){const a=a0+i*2.1;ctx.beginPath();ctx.moveTo(x+12+Math.cos(a)*9,y+12+Math.sin(a)*6);ctx.lineTo(x+12+Math.cos(a)*13,y+12+Math.sin(a)*9);ctx.stroke();}}
+    return;}
+  if(k==='jam'){ // 三角コーン
+    ctx.fillStyle='#ff7a1a';ctx.beginPath();ctx.moveTo(x+12,y+2);ctx.lineTo(x+19,y+20);ctx.lineTo(x+5,y+20);ctx.closePath();ctx.fill();
+    R2(x+8,y+9,8,2.5,'#f4f4f4');R2(x+6.5,y+14,11,2.5,'#f4f4f4');R2(x+3,y+20,18,3,'#c94e12');return;}
+  if(k==='sa'){R2(x+2,y+4,20,16,'#1f6fd6');R2(x+3,y+5,18,14,'#2a7fe8');ctx.fillStyle='#fff';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SA',x+12,y+12.5);return;}
+  if(k==='road'){R2(x+2,y+4,20,16,'#1f7a46');ctx.strokeStyle='#f4f4f4';ctx.lineWidth=1;ctx.strokeRect(x+3.5,y+5.5,17,13);ctx.fillStyle='#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('E1',x+12,y+12.5);return;}
+  if(k==='yoshi'){R2(x,y+1,24,22,'#3a3f5a');ctx.drawImage(YOSHI.idle,0,0,CW,30,x+1,y+1,CW*0.7,21);return;}
+  ctx.fillStyle='#ffd27a';ctx.beginPath();ctx.arc(x+12,y+12,9,0,7);ctx.fill();ctx.fillStyle='#16121e';ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('！',x+12,y+13);
+}
+function drawBanner(){ // 出来事の見出し：右の枠（つぶやきと同じ場所）に、アイコンつきで
   const b=G.banner;if(!b||b.t>150)return;
   const a=Math.min(1,b.t/10,(150-b.t)/15);ctx.globalAlpha=Math.max(0,a);
-  ctx.save();ctx.beginPath();ctx.rect(0,78,W,30);for(const [rx,ry,rw,rh] of (G.vmsRects||[]))ctx.rect(rx+rw,ry,-rw,rh); // 電光掲示板の上には帯を敷かない（赤い文字が暗くならないように）
-  ctx.clip('evenodd');ctx.fillStyle='rgba(10,12,24,.55)';ctx.fillRect(0,78,W,30);ctx.restore();
-  let cx=W/2;ctx.font='bold 15px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';const tw=ctx.measureText(b.s).width;
-  for(const [rx,ry,rw,rh] of (G.vmsRects||[]))if(ry<108&&ry+rh>78&&rx<cx+tw/2+6&&rx+rw>cx-tw/2-6){ // 掲示板と重なる時は、空いている側へずらす
-    cx=rx>W-rx-rw?Math.max(tw/2+8,rx/2):Math.min(W-tw/2-8,(rx+rw+W)/2);}
-  txt(b.s,cx,93,15,b.col,'center');ctx.globalAlpha=1;
+  const k=b.kind||(b.kind=bannerKind(b.s));let fs=14;ctx.font=`bold ${fs}px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif`;
+  let tw=ctx.measureText(b.s).width;if(tw>W-60){fs=12;ctx.font=`bold ${fs}px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif`;tw=ctx.measureText(b.s).width;}
+  const w=Math.min(W-12,Math.ceil(tw)+44),x=W-6-w,y=PANEL_Y,h=34,bc=k==='cop'?'#ff6a5a':k==='jam'?'#ffa040':k==='sa'?'#7dc0ff':k==='road'?'#7dff8a':'#ffd27a';
+  ctx.fillStyle='rgba(10,12,24,.85)';ctx.fillRect(x,y,w,h);ctx.strokeStyle=bc;ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
+  bannerIcon(k,x+6,y+5,G.time);
+  ctx.textAlign='left';ctx.textBaseline='middle';ctx.font=`bold ${fs}px "Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif`;
+  ctx.lineWidth=3;ctx.strokeStyle='#16121e';ctx.strokeText(b.s,x+36,y+h/2+1);ctx.fillStyle=b.col||'#ffd27a';ctx.fillText(b.s,x+36,y+h/2+1);
+  ctx.globalAlpha=1;
 }
 // ---------- タイトルロゴ：1作目のロゴ（街並みのパネル＋GOGO＋いもっち）を進化。横浜の朝→富士山→名古屋の夕焼け、燃える「2」 ----------
 let LOGO2=null;
