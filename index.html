@@ -1548,7 +1548,7 @@ function update(){
   // 追い越し：車を後ろへ抜いたら少し加速
   for(const c of G.cars){
     if(!c.said&&G.caught<=0&&c.x+c.w*0.55<p.x+CW/2&&!c.koji){c.said=true;if(c.totsuka){c.say={s:'いもっち！？！？',t:0};for(const o of G.cars)if(o!==c&&o.say)o.say.t=99;}else if(Math.random()<0.6&&!G.cars.some(o=>o.say&&o.say.t<70))c.say={s:pick(c.jam?CAR_JAM:G.v<=80?CAR_ANGRY:CAR_LINES),t:0};}
-    if(c.say)c.say.t++;
+    if(c.say){c.say.t++;if(c.totsuka&&c.say.s==='いもっち！？！？'&&c.say.t>=50)c.say={s:'なんでここにいんの！？',t:0};}
     if(!c.passed&&c.x+c.w<p.x+15){c.passed=true;if(!c.hitMe){G.passed++;const n=c.koji?3:1;G.v=Math.min(VMAX,G.v+n);addText(p.x+CW/2,p.y-4,c.koji?'工事車両クリア！ +3':'追い越し！ +1','#bfe8ff');sfx('pass');}}
   }
   for(const f of G.flyers){f.x+=f.vx-gs*0.3;f.y+=f.vy;f.vy+=0.35;f.rot+=f.vr;f.t++;}
@@ -2319,8 +2319,8 @@ function tollApproach(){
   // 路面：導流帯（白い斜線）とラバーポール
   const a=kmX(TOLL_KM-0.5),b=kmX(TOLL_KM+0.3);
   if(b>0&&a<W){ctx.save();ctx.beginPath();ctx.rect(Math.max(0,a),216,Math.min(W,b)-Math.max(0,a),10);ctx.clip();
-    ctx.strokeStyle='rgba(242,242,242,.8)';ctx.lineWidth=2;for(let x=a-((a%14)+14)%14;x<b+20;x+=14){ctx.beginPath();ctx.moveTo(x,226);ctx.lineTo(x+10,216);ctx.stroke();}ctx.restore();
-    for(let x=a;x<b;x+=18)if(x>-6&&x<W+6){rect(x,232,3,10,'#ff7a1a');rect(x,234,3,1.5,'#f4f4f4');rect(x,238,3,1.5,'#f4f4f4');rect(x-1,241,5,2,'#3a3a40');}}
+    ctx.strokeStyle='rgba(242,242,242,.8)';ctx.lineWidth=2;for(let x=a+Math.max(0,Math.ceil((-20-a)/14))*14;x<b+20&&x<W+20;x+=14){const rx=Math.round(x);ctx.beginPath();ctx.moveTo(rx,226);ctx.lineTo(rx+10,216);ctx.stroke();}ctx.restore();
+    for(let x=a+Math.max(0,Math.ceil((-10-a)/18))*18;x<b&&x<W+6;x+=18)if(x>-6){rect(x,232,3,10,'#ff7a1a');rect(x,234,3,1.5,'#f4f4f4');rect(x,238,3,1.5,'#f4f4f4');rect(x-1,241,5,2,'#3a3a40');}}
 }
 function snapScene(){ // 今いる場所の景色（空・山・街・道路）だけを別のキャンバスに2倍で描いて写し取る（記念写真の背景）
   const c=document.createElement('canvas');c.width=W*2;c.height=H*2;const main=ctx;
@@ -3084,25 +3084,26 @@ function drawTunnelBack(){
   }
 }
 let TUN_GLOW=null;
-function tunnelInside(a,b,dd){ // トンネルの中：暗い天井・ジェットファン・オレンジの照明の列・灯りの当たる壁・白い内装板・非常電話と消火栓
+function tunnelInside(a,b,dd){ const st=(P,o)=>a-(((a-o)%P)+P)%P; // 画面に固定した位置から並べる（坑口と一緒に動かない）
+  // トンネルの中：暗い天井・ジェットファン・オレンジの照明の列・灯りの当たる壁・白い内装板・非常電話と消火栓
   const F2=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
   {const g=ctx.createLinearGradient(0,0,0,70);g.addColorStop(0,'#141418');g.addColorStop(1,'#2e2c2c');ctx.fillStyle=g;ctx.fillRect(a,0,b-a,70);}   // 天井
   {const g=ctx.createLinearGradient(0,66,0,124);g.addColorStop(0,'#6a5a46');g.addColorStop(1,'#4a4440');ctx.fillStyle=g;ctx.fillRect(a,66,b-a,58);}  // 照明の下の壁（オレンジに照らされる）
   {const g=ctx.createLinearGradient(0,124,0,214);g.addColorStop(0,'#d8cdb4');g.addColorStop(.8,'#b8ad96');g.addColorStop(1,'#6e665a');ctx.fillStyle=g;ctx.fillRect(a,124,b-a,90);} // 白い内装板
   F2(a,123,b-a,1.5,'#3a3630');for(let y=142;y<204;y+=18)F2(a,y,b-a,0.8,'rgba(90,80,64,.35)');
-  const jo=dd%40;for(let x=a-jo;x<b;x+=40)F2(x,124,1,82,'rgba(90,80,64,.4)');
+  for(let x=st(40,0);x<b;x+=40)F2(x,124,1,82,'rgba(90,80,64,.4)');
   F2(a,204,b-a,10,'#3e3a36');F2(a,204,b-a,1,'#5e5850');                                                          // 足元の監視員通路
   // ジェットファン（天井からつるした筒）
-  const fo=dd%520;for(let x=a-fo+120;x<b+60;x+=520){F2(x+10,10,2,8,'#3a3a40');F2(x+38,10,2,8,'#3a3a40');F2(x,18,52,14,'#5a5c62');F2(x,18,52,3,'#787a80');F2(x,29,52,3,'#3e4046');
+  for(let x=st(520,120)-520;x<b+60;x+=520){F2(x+10,10,2,8,'#3a3a40');F2(x+38,10,2,8,'#3a3a40');F2(x,18,52,14,'#5a5c62');F2(x,18,52,3,'#787a80');F2(x,29,52,3,'#3e4046');
     ctx.fillStyle='#2a2b30';ctx.beginPath();ctx.ellipse(x,25,3,7,0,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(x+52,25,3,7,0,0,7);ctx.fill();}
   // 照明（ナトリウム灯）：灯具は明るく、下の壁にオレンジの光
-  const lo=dd%44;ctx.save();ctx.globalCompositeOperation='lighter';
+  const l0=st(44,0);ctx.save();ctx.globalCompositeOperation='lighter';
   if(!TUN_GLOW){const c=document.createElement('canvas');c.width=148;c.height=160;const g2=c.getContext('2d'),g=g2.createRadialGradient(74,24,2,74,40,68);g.addColorStop(0,'rgba(255,180,80,.7)');g.addColorStop(1,'rgba(255,120,30,0)');g2.fillStyle=g;g2.fillRect(0,0,148,160);TUN_GLOW=c;}
-  for(let x=a-lo;x<b+20;x+=44)ctx.drawImage(TUN_GLOW,x-30,50,74,80);   // 光は1回だけ作った画像を使い回す（軽くするため）
+  for(let x=l0-44;x<b+20;x+=44)ctx.drawImage(TUN_GLOW,x-30,50,74,80);   // 光は1回だけ作った画像を使い回す（軽くするため）
   ctx.restore();
-  for(let x=a-lo;x<b+20;x+=44){F2(x-1,57,16,6,'#2a2826');F2(x,58.5,14,4,'#ffb040');F2(x+1,59,12,2.4,'#ffe08a');F2(x+3,59.4,8,1.2,'#fffbe8');}
+  for(let x=l0-44;x<b+20;x+=44){F2(x-1,57,16,6,'#2a2826');F2(x,58.5,14,4,'#ffb040');F2(x+1,59,12,2.4,'#ffe08a');F2(x+3,59.4,8,1.2,'#fffbe8');}
   // 非常電話・消火栓（緑の非常口サイン）
-  const eo=dd%400;for(let x=a-eo+200;x<b+40;x+=400){F2(x,150,26,30,'#e8e4da');F2(x,150,26,8,'#1f8a4a');ctx.fillStyle='#fff';ctx.font='bold 6px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('非常電話',x+13,154.4);
+  for(let x=st(400,200)-400;x<b+40;x+=400){F2(x,150,26,30,'#e8e4da');F2(x,150,26,8,'#1f8a4a');ctx.fillStyle='#fff';ctx.font='bold 6px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('非常電話',x+13,154.4);
     F2(x+6,161,14,14,'#c8202a');F2(x+7,162,12,12,'#e03a2e');ctx.fillText('消火栓',x+13,168.4);F2(x+12,128,10,6,'#1f8a4a');F2(x+13,129,3,4,'#e8f4e8');}
 }
 function drawTunnelFront(){ // 中では少しだけオレンジっぽく暗く（照明が茶色くつぶれないよう薄め）
@@ -3843,6 +3844,7 @@ function draw(){
   drawOji();
   for(const it of G.items)drawItem(it);
   if(G.smoke&&G.smoke.length)drawSmoke();
+  if(G.kids&&G.kids.say)drawSayKid({x:G.kids.x+30,y:GROUND-58},G.kids.say.s);
   drawPlayer(G.p);
   if(G.imoFly){const f=G.imoFly;ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(Math.round(f.x-4),GROUND-1,8,2);if(f.tail){ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.rot);ctx.fillStyle=OUTLINE;ctx.fillRect(-2.5,-1.5,5,3);ctx.fillStyle='#8e2f55';ctx.fillRect(-1.5,-0.8,3,1.6);ctx.restore();}else drawYakiimo(f.x,f.y,f.rot,!G.imoBit);}
   drawSpeedFx();
@@ -3857,7 +3859,6 @@ function draw(){
   drawPhone();
   drawPhoto();
   for(const c of G.cars)drawCarSay(c);
-  if(G.kids&&G.kids.say)drawSayKid({x:G.kids.x+30,y:GROUND-58},G.kids.say.s);
   if(G.say)(G.say.big?drawSayBig:drawSay)(G.p,G.say.s); // v28：いちばん手前
   if(G.flash>0){ctx.fillStyle=`rgba(255,250,240,${G.flash/14*0.8})`;ctx.fillRect(0,0,W,H);}
   if((G.mode==='clear'&&G.overT>phT()+170)||(G.mode==='over'&&G.overT>LOSE_PH+170))drawResult();
@@ -3888,6 +3889,7 @@ function debugShot(name){
   if(/^bg_/.test(name)){const m=/^bg_([a-zA-Z]+)([\d.]*)$/.exec(name),sc=SECTIONS.find(x=>x.bg===m[1]);G.km=sc.km+(m[2]?+m[2]:3);G.time=900;G.mode='bgview';G.freeze=true;return;}
   if(name==='title'||name==='title2'||name==='title3'){G.mode='title';G.time=name==='title'?44:name==='title3'?300:150;G.km=name==='title'?0:100;G.freeze=true;return;}
   if(name==='imohold'){for(let i=0;i<322;i++)update();G.freeze=true;return;}
+  {const m=/^at([\d.]+)_(\d+)$/.exec(name);if(m){while(G.mode==='intro')update();G.km=+m[1];G.cars=[];for(let i=0;i<+m[2];i++){G.p.inv=9;G.cars=[];update();}G.p.inv=0;G.freeze=true;return;}}
   if(name==='kids3'){while(G.mode==='intro')update();while(!G.kids||G.kids.x>G.p.x-20){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
   if(name==='bridge1'){while(G.mode==='intro')update();G.km=52.75;G.cars=[];for(let i=0;i<3;i++){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
   if(name==='kids'||name==='kids2'){while(G.mode==='intro')update();while(!G.kids||!G.kids.said){G.p.inv=9;update();}const n=name==='kids'?10:85;for(let i=0;i<n;i++){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
@@ -3909,6 +3911,7 @@ function debugShot(name){
   if(name==='clothfire'){G.v=152;for(let i=0;i<60;i++){adv();G.v=Math.max(G.v,118);G.overT2=0;}}
   if(name==='burnt'){G.v=152;for(let i=0;i<10;i++)adv();G.clothT=3;for(let i=0;i<40;i++){adv();G.v=Math.min(G.v,110);}}
   if(name==='totsuka'){G.totsukaKm=0;for(let i=0;i<6000&&!G.cars.some(c=>c.totsuka&&c.x<W-260);i++)adv();}
+  if(name==='totsuka3'){G.totsukaKm=0;for(let i=0;i<9000&&!G.cars.some(c=>c.totsuka&&c.say&&c.say.s==='なんでここにいんの！？');i++)adv();for(let i=0;i<10;i++)adv();}
   if(name==='totsuka2'){G.totsukaKm=0;for(let i=0;i<9000&&!G.cars.some(c=>c.totsuka&&c.say&&c.say.s==='いもっち！？！？');i++)adv();for(let i=0;i<8;i++)adv();}
   if(name==='koji'){for(let i=0;i<4000&&!G.cars.some(c=>c.koji&&c.x<W-200);i++)adv();}
   if(name==='red'){G.cloth='fire';G.clothT=600;G.items.push({x:PX+40,y:G.p.y+10,t:0,kind:'helmet'});for(let i=0;i<60;i++)adv();}
