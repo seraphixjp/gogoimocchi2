@@ -1622,7 +1622,7 @@ function update(){
       it.got=true;
       if(it.kind==='imo'){G.imoN++;if(G.imoN%2===0)G.fartT=80;boost(6,G.water<WATER_MAX*0.5?'うまい！…けどのど乾く！':'うまい！');snd('heal');G.water=Math.max(0,G.water-12);}
       else if(it.kind==='manju'){boost(12,'焼きまんじゅうだ！');snd('heal');G.water=Math.max(0,G.water-18);}
-      else if(it.kind==='helmet'){G.red=300;G.redN++;news('red','赤く光る物体が東名を時速300kmで移動　UFOか');carInEv('red'+G.redN,G.redN===1?'ラジオで「赤く光る人が爆走中」だって！UFO？':'また赤く光る人の情報…流行ってるの？',G.redN===1?'UFOじゃなくてオレー！':null);G.shake=8;snd('stomp');sfx('boost');banner('赤いヘルメット！ 5秒間スピード3倍！','#ff6a5a');G.say={s:'うおおお！3倍だーー！！',t:0};
+      else if(it.kind==='helmet'){G.red=300;G.redN++;news('red','赤く光る物体が東名を時速300kmで移動　UFOか');carInEv('red'+G.redN,G.redN===1?'ラジオで「赤く光る人が爆走中」だって！UFO？':'また赤く光る人の情報…流行ってるの？',G.redN===1?'UFOじゃなくてオレー！':null);G.shake=8;snd('stomp');sfx('boost');banner('スーパーザクいもっち！ 5秒間3倍！','#ff6a5a');G.say={s:'うおおお！3倍だーー！！',t:0};
         if(G.cop&&G.cop.state==='chase'){G.cop.state='leave';G.copCD=480;}bgmSet(2);}
       else if(it.kind==='tea'){boost(5,G.water<=0?'静岡のお茶で生き返ったー！':pick(['静岡のお茶！しみるー！','茶畑の味がするー！']));snd('water');G.water=WATER_MAX;G.dry=false;}
       else if(it.kind==='gyoza'){boost(10,G.flags.ci240?'オレも餃子食べたー！…のど乾く！':'浜松餃子うまっ！…のど乾く！');snd('heal');G.water=Math.max(0,G.water-20);}
@@ -1748,12 +1748,14 @@ function drawCarIn(){ // v19：文字を大きく（9→13px）
     ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(x+20,y+14,2.8,0,7);ctx.fill();
     ctx.textAlign='left';ctx.textBaseline='middle';ctx.font=JF(9);ctx.fillStyle='#7dff8a';ctx.fillText(c.lb||'現在地',x+36,y+9);
     ctx.font=JF(14);ctx.fillStyle='#ffffff';ctx.fillText(c.s,x+36,y+23);ctx.globalAlpha=1;return;}
-  ctx.font=JF(13);const w=Math.min(W-150,Math.ceil(ctx.measureText(c.s).width)+52),x=W-6-w,y=PANEL_Y,h=34;
+  let fs=13,tw=0;                                                        // 枠に収まるまで文字を小さくする（左の水分ゲージには重ねない）
+  for(;fs>=9;fs-=0.5){ctx.font=JF(fs);tw=Math.ceil(ctx.measureText(c.s).width);if(tw+56<=W-110)break;}
+  const w=Math.max(tw,ctx.measureText('そのころ車内では…').width|0)+56,x=W-6-w,y=PANEL_Y,h=34;
   ctx.fillStyle='rgba(10,12,24,.82)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ff9ad2';ctx.lineWidth=1.5;ctx.strokeRect(x+0.75,y+0.75,w-1.5,h-1.5);
   rect(x+3,y+3,40,28,'#3a3f5a');ctx.drawImage(YOSHI.idle,0,0,CW,30,x+4,y+3,CW*0.93,28);
   ctx.textAlign='left';ctx.textBaseline='middle';
   ctx.font=JF(9);ctx.fillStyle='#ff9ad2';ctx.fillText('そのころ車内では…',x+48,y+9);
-  ctx.font=JF(13);ctx.fillStyle='#ffffff';ctx.fillText(c.s,x+48,y+23);
+  ctx.font=JF(Math.max(9,fs));ctx.fillStyle='#ffffff';ctx.fillText(c.s,x+48,y+23);
   ctx.globalAlpha=1;
 }
 // いもっちのツッコミ用の大きい赤字の吹き出し
@@ -3538,7 +3540,7 @@ function drawHUD(){
   const gx=86,gw=46;rect(gx,H-30,gw,6,'#2a2f4a');
   const fill=Math.min(1,G.v/VMAX)*gw;rect(gx,H-30,fill,6,G.v<100?'#58d36a':G.v<=LIMIT?'#ffd23a':'#ff5a5a');
   rect(gx+gw*LIMIT/VMAX,H-33,1,12,'#ffffff');txt('120',gx+gw*LIMIT/VMAX,H-14,7,'#ffffff','center');
-  if(G.mode==='play'&&G.red>0)txt(`×3！ あと ${(G.red/60).toFixed(1)} 秒`,138,H-46,10,'#ff6a5a','right');
+  if(G.mode==='play'&&G.red>0)txt(`スーパーザクいもっち ×3！ ${(G.red/60).toFixed(1)}秒`,8,H-46,9,'#ff6a5a','left');
   else if(G.mode==='play'&&over&&(G.time/12|0)%2)txt('スピード違反！',138,H-46,9,'#ff7a7a','right');
   if(G.mode==='play'&&G.cop&&G.cop.state==='chase'){
     const left=Math.max(0,15-G.cop.t/60);
@@ -3702,7 +3704,7 @@ function drawTitle(){
   drawTitleChase();
   txt('置いていったよしちゃんに、名古屋に着く前に追いつけ！',W/2,192,11,'#ffe14d','center');
   txt('車は飛び越えて追い越す　アイテムで加速・ぶつかると減速　120km/h超えでパトカー出動',W/2,204,9,'#cfe0ff','center');
-  txt('走ると水分が減る（水で回復）　赤いヘルメットで5秒間スピード3倍！',W/2,215,9,'#cfe0ff','center');
+  txt('走ると水分が減る（水で回復）　スーパーザクいもっちで5秒間スピード3倍！',W/2,215,9,'#cfe0ff','center');
   if((G.time/30|0)%2)txt(coarse()?'タップでスタート':'ENTER / SPACE でスタート',W/2,231,14,'#fff','center');
   txt(coarse()?'画面タップでジャンプ（長押しで高く・空中でもう一回で二段）':'SPACE かクリックでジャンプ（長押しで高く・空中でもう一回で二段）　M 音　P 一時停止',W/2,250,9,'#b8c0e0','center');
   if(bestTime)txt(`ベスト ${fmtTime(bestTime)}`,W/2,262,9,'#ffd27a','center');
@@ -3910,6 +3912,7 @@ function debugShot(name){
   if(name==='imohold'){for(let i=0;i<322;i++)update();G.freeze=true;return;}
   {const m=/^at([\d.]+)_(\d+)$/.exec(name);if(m){while(G.mode==='intro')update();G.km=+m[1];G.cars=[];for(let i=0;i<+m[2];i++){G.p.inv=9;G.cars=[];update();}G.p.inv=0;G.freeze=true;return;}}
   if(name==='wavesheet'){G.freeze=true;G.mode='wavesheet';return;}
+  if(/^carinlong/.test(name)){while(G.mode==='intro')update();G.banner=null;G.inCar={s:name==='carinlong'?'ラジオで「焼き芋を持って東名を走る男性」だって。おなかすいた～':'ソフトクリーム買ってくるね！いもっちのも買う？',reply:null,t:60};G.freeze=true;return;}
   if(name==='kids3'){while(G.mode==='intro')update();while(!G.kids||G.kids.x>G.p.x-20){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
   if(name==='bridge1'){while(G.mode==='intro')update();G.km=52.75;G.cars=[];for(let i=0;i<3;i++){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
   if(name==='kids'||name==='kids2'){while(G.mode==='intro')update();while(!G.kids||!G.kids.said){G.p.inv=9;update();}const n=name==='kids'?10:85;for(let i=0;i<n;i++){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
@@ -3918,7 +3921,7 @@ function debugShot(name){
   if(name==='imodone'){while(G.mode==='intro')update();while(G.imoHold){G.p.inv=9;G.cars=[];update();}for(let i=0;i<14;i++)update();G.p.inv=0;G.freeze=true;return;}
   if(name==='imorun'||/^imofly/.test(name)){while(G.mode==='intro')update();for(let i=0;i<40;i++)update();if(/^imofly/.test(name)){G.p.inv=0;hurt(null,10);const n={imofly:12,imofly2:30,imofly3:60,imofly4:110,imofly5:100}[name];for(let i=0;i<n;i++)update();}G.freeze=true;return;}
   if(/^intro/.test(name)){const n={intro:90,intro2:380,intro3:570,intro4:420,intro5:442,intro6:567,intro7:640,intro8:200,intro9:262}[name]||30;for(let i=0;i<n;i++)update();G.freeze=true;return;}
-  for(let i=0;i<540;i++)update();
+  while(G.mode==="intro")update();
   const sec=SECTIONS.find(x=>x.bg===name),kmm=/^km([\d.]+)$/.exec(name);
   const tgt=/^shops/.test(name)?5:kmm?+kmm[1]:sec?sec.km+5:{shoefire:40,shoesmoke:40,torn1:30,torn2:30,loc:24,bare:40,clothfire:40,burnt:40,jam:71.5,koji:40,red:100,sastop:60,carsay:30,sa:23.9,sa2:25.4,fuji2:72,tunnel:167.4,bridge:180.3,city:4,honmura:8.3,toll:11.9,tanzawa:30,fuji:85,shizuoka:150,hamana:222,aichi:280,nagoya:321,cop:60,caught:60,clear:140,clear2:140,clear3:140,over:200,losephoto:200,over2:200,toll2:11.9,toll3:11.9,toll4:11.9,vms:(vmsKms()[0]-0.25),speed:14.2,signs:23.3,sain:25.1,fart:40,orbis:41,carin:20,carin2:20,seam1:61.6,seam2:91.6,seam3:127.5,seam4:5.9,dry:30,hitch:30,news:15.6,phone:52,local:240,goalphoto:140,totsuka:24,totsuka2:24,shinkan:215,prints:30,caught2:60,result:140}[name]||0;
   const adv=()=>{if(name!=='sastop')G.grbKm=Math.max(G.grbKm,G.km+4);G.water=WATER_MAX;G.p.inv=2;debugBot();update();};
