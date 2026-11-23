@@ -153,7 +153,13 @@ function renderChar(pose){
     if(bottle){const bx=Math.round(hnd[0])-1,by=Math.round(hnd[1]);F(C.bottle);g.fillRect(bx,by-1,3,8);F(C.label);g.fillRect(bx,by+1,3,2);F(C.white);g.fillRect(bx+1,by-2,1,1);}
   }
   // 奥の腕・奥の脚
-  arm(pose.ba,C.blueD,C.skinD,false);
+  if(pose.wave===undefined)arm(pose.ba,C.blueD,C.skinD,false);
+  else{ // 手を振る：奥の腕そのものを上げる（腕は2本のまま）。ひじを後ろに張り、手を頭の後ろへ
+    const sh=[19,20],e=[12.5,17],hnd=[e[0]+8.5*Math.sin(pose.wave),e[1]+8.5*Math.cos(pose.wave)];
+    S(C.skinD);g.lineWidth=3.6;g.beginPath();g.moveTo(sh[0],sh[1]);g.lineTo(e[0],e[1]);g.lineTo(hnd[0],hnd[1]);g.stroke();
+    F(C.skinD);g.beginPath();g.arc(hnd[0],hnd[1],2,0,7);g.fill();
+    S(C.blueD);g.lineWidth=5.4;g.beginPath();g.moveTo(sh[0],sh[1]);g.lineTo(14.5,18);g.stroke();
+  }
   leg(pose.bl,pose.bb,C.pantsD);
   leg(pose.fl,pose.fb,C.pants);
   // 腰
@@ -944,21 +950,15 @@ function messHair(o){ // 燃えた後：髪がぼさぼさ（髪のまわりに�
 }
 function charSet(burnt){const f=c=>{const o=recolorChar(c,burnt);return burnt?messHair(o):o;};return {run:CHAR.run.map(f),idle:f(CHAR.idle),jump:f(CHAR.jump),hurt:f(CHAR.hurt)};}
 const CHAR_BARE=charSet(false),CHAR_BURNT=charSet(true);
-// 焼き芋を持っている間：走っても手前の腕は前のまま（芋が体の後ろへ回らない）
-const IMO_FA=0.75;
-const CHAR_IMO=(()=>{const run=[];for(let k=0;k<8;k++){const s=Math.sin(k/8*Math.PI*2);run.push(renderChar({fl:0.7*s,bl:-0.7*s,fb:s<0?-s*1.3+0.1:0.1,bb:s>0?s*1.3+0.1:0.1,fa:IMO_FA,ba:0.75*s}));}
-  return {run,idle:CHAR.idle,jump:CHAR.jump,hurt:CHAR.hurt,imo:true};})();
-const imoSet=burnt=>{const f=c=>{const o=recolorChar(c,burnt);return burnt?messHair(o):o;};return {run:CHAR_IMO.run.map(f),idle:f(CHAR_IMO.idle),jump:f(CHAR_IMO.jump),hurt:f(CHAR_IMO.hurt),imo:true};};
-const CHAR_IMO_BARE=imoSet(false),CHAR_IMO_BURNT=imoSet(true);
 // ---- ぶつかると服が破れる（3回＝袖が破れてタオルが落ちる・6回＝シャツが大きく裂けてズボンにも穴）
 const SHIRT_KEYS=new Set([C.blue,C.blueD,C.blueL,C.black,C.red].map(hexKey)),PANTS_KEYS=new Set([C.pants,C.pantsD].map(hexKey)),TOWEL_KEYS=new Set([C.towel,C.towelL].map(hexKey));
-function recolorTorn(c,lv){ // 破れ目は線で：斜めの裂け目から白い下着が見える・ふちは濃い青・袖がちぎれる・すそがギザギザ・（6回）ズボンのすそがちぎれる
+function recolorTorn(c,lv){ // 破れ目は線で：斜めの裂け目から肌が見える・ふちは濃い青・袖がちぎれる・すそがギザギザ・（6回）ズボンのすそがちぎれる
   const o=document.createElement('canvas');o.width=c.width;o.height=c.height;const g=o.getContext('2d');g.drawImage(c,0,0);
   const Wd=o.width,Hd=o.height,id=g.getImageData(0,0,Wd,Hd),d=id.data;
-  const skin=hex2rgb(C.skin),skinD=hex2rgb(C.skinD),under=hex2rgb('#f2f0ea'),underD=hex2rgb('#c9c6bc'),edge=hex2rgb('#0f2290'),dirt=hex2rgb('#4a3e36');
-  const key=i=>d[i]+','+d[i+1]+','+d[i+2],T=new Uint8Array(Wd*Hd); // 0=そのまま 1=下着 2=肌 3=汚れ
+  const skin=hex2rgb(C.skin),skinD=hex2rgb(C.skinD),under=hex2rgb(C.skin),underD=hex2rgb(C.skinD),edge=hex2rgb('#0f2290'),dirt=hex2rgb('#4a3e36');
+  const key=i=>d[i]+','+d[i+1]+','+d[i+2],T=new Uint8Array(Wd*Hd); // 0=そのまま 1=破れ目（肌） 2=肌 3=汚れ
   const jag=(x,y)=>((x*928371+y*12377)>>>0)%3-1;                        // 裂け目のギザギザ
-  const armN=new Uint8Array(Wd*Hd),sk=key0=>key0===hexKey(C.skin)||key0===hexKey(C.skinD);  // 手前の腕（胸より下の肌）のまわり1マスは破らない＝袖口が下着で隠れない
+  const armN=new Uint8Array(Wd*Hd),sk=key0=>key0===hexKey(C.skin)||key0===hexKey(C.skinD);  // 手前の腕（胸より下の肌）のまわり1マスは破らない＝袖口が破れ目で隠れない
   for(let y=21;y<Hd;y++)for(let x=0;x<Wd;x++){const i=(y*Wd+x)*4;if(!d[i+3]||!sk(key(i)))continue;for(let v=y-1;v<=y+1;v++)for(let u=x-1;u<=x+1;u++)if(u>=0&&v>=0&&u<Wd&&v<Hd)armN[v*Wd+u]=1;}
   for(let y=0;y<Hd;y++)for(let x=0;x<Wd;x++){const i=(y*Wd+x)*4;if(!d[i+3])continue;const k=key(i);
     const gray=Math.abs(d[i]-d[i+1])<14&&Math.abs(d[i+1]-d[i+2])<20&&d[i]>120&&d[i]<215;
@@ -990,6 +990,22 @@ function recolorTorn(c,lv){ // 破れ目は線で：斜めの裂け目から白�
 }
 function tornSet(base,lv){return {run:base.run.map(c=>recolorTorn(c,lv)),idle:recolorTorn(base.idle,lv),jump:recolorTorn(base.jump,lv),hurt:recolorTorn(base.hurt,lv)};}
 const CHAR_TORN1=tornSet(CHAR,1),CHAR_TORN2=tornSet(CHAR,2),CHAR_BARE_TORN1=tornSet(CHAR_BARE,1),CHAR_BARE_TORN2=tornSet(CHAR_BARE,2);
+const WAVE_C=new Map();
+function fillHoles(c){ // タオルを消したあとの腕の付け根の小さな穴を、袖の色で埋める
+  const g=c.getContext('2d'),w=c.width,id=g.getImageData(0,0,w,c.height),d=id.data,b=hex2rgb(C.blueD),A=(x,y)=>d[(y*w+x)*4+3]>0;
+  for(let n=0;n<2;n++)for(let y=13;y<24;y++)for(let x=8;x<20;x++)if(!A(x,y)&&A(x-1,y)+A(x+1,y)+A(x,y-1)+A(x,y+1)>=3){const i=(y*w+x)*4;d[i]=b[0];d[i+1]=b[1];d[i+2]=b[2];d[i+3]=255;}
+  g.putImageData(id,0,0);return c;
+}
+function waveSpr(CH,k,f){ // 奥の腕を上げて手を振る走りの絵（今の服に合わせて作り、使い回す）
+  if(!WAVE_C.has(CH))WAVE_C.set(CH,{});
+  const m=WAVE_C.get(CH),id=k*2+f;if(m[id])return m[id];
+  const s=Math.sin(k/8*Math.PI*2);let c=renderChar({fl:0.7*s,bl:-0.7*s,fb:s<0?-s*1.3+0.1:0.1,bb:s>0?s*1.3+0.1:0.1,fa:-0.75*s,wave:f?-2.75:-2.15});
+  if(CH===CHAR_BURNT)c=messHair(recolorChar(c,true));
+  else{if(CH===CHAR_BARE||CH===CHAR_BARE_TORN1||CH===CHAR_BARE_TORN2)c=recolorChar(c,false);
+    if(CH===CHAR_TORN1||CH===CHAR_BARE_TORN1)c=recolorTorn(c,1);
+    if(CH===CHAR_TORN2||CH===CHAR_BARE_TORN2)c=recolorTorn(c,2);}
+  return m[id]=fillHoles(c);
+}
 const tornLv=()=>G.hits>=6?2:G.hits>=3?1:0;   // ぶつかった回数で服が破れる（3回・6回）
 function charNow(fireAsBurnt){ // 今のいもっちの絵：燃えた服が最優先 → 破れた服 → 裸足 → ふつう
   if(G.cloth==='burnt'||(fireAsBurnt&&G.cloth==='fire'))return CHAR_BURNT;
@@ -3409,7 +3425,7 @@ function imoGags(gs){
   if(!G.kidsDone&&G.km>=5.5&&G.km<TOLL_KM-1.5){G.kidsDone=true;G.kids={x:W+30,t:0,said:false,say:null};}
   const k=G.kids;if(k){k.t++;k.x-=gs;if(k.say)k.say.t++;
     if(!k.said&&k.x<G.p.x+150){k.said=true;k.say={s:'いもっちー！がんばれー！',t:0};}
-    if(k.said&&k.say&&k.say.t===75){k.say=null;if(G.caught<=0){G.say={s:'おう！ありがとなー！',t:0};G.waveT=80;}}
+    if(k.said&&k.say&&k.say.t===75){k.say=null;if(G.caught<=0){G.say={s:'ありがとー！',t:0};G.waveT=80;}}
     if(k.x<-60)G.kids=null;}
 }
 function drawKid(x,y,shirt,t,ph){ // 小学生（左向き・黄色い帽子・赤いランドセル）。x,y＝足元
@@ -3436,7 +3452,7 @@ function drawKids(){
   else{drawKid(k.x,y,'#4a8ad8',k.t,0);drawKid(k.x+20,y,'#f07aa8',k.t,1.7);}
 }
 function poseFa(spr,CH){ // 今の絵の手前の腕の角度（renderChar の fa と同じ）
-  const k=CH.run.indexOf(spr);if(k>=0)return CH.imo?IMO_FA:-0.75*Math.sin(k/8*Math.PI*2);
+  const k=CH.run.indexOf(spr);if(k>=0)return -0.75*Math.sin(k/8*Math.PI*2);
   return spr===CH.jump?2.2:spr===CH.hurt?2.7:0.15;
 }
 function handXY(fa){const e=[21+6*Math.sin(fa),20+6*Math.cos(fa)],a=fa+0.35;return [e[0]+6*Math.sin(a),e[1]+6*Math.cos(a)];}
@@ -3462,6 +3478,8 @@ function drawPlayer(p){
   else if(G.mode==='intro')spr=(G.introT>155&&G.introT<175)||(G.introT>=560&&G.introT<580)?CH.jump:CH.idle;
   else if(G.caught>0||G.mode==='over'||G.mode==='clear')spr=G.mode==='clear'&&G.overT<60?CH.hurt:CH.idle;
   else spr=CH.run[((p.anim/5)|0)%8];
+  const base=spr;
+  if(G.waveT>0&&G.mode==='play'&&CH.run.includes(spr))spr=waveSpr(CH,CH.run.indexOf(spr),((G.waveT/7)|0)%2);
   if(p.inv>0&&((p.inv/4|0)%2)&&G.mode==='play')return;
   const X=Math.round(p.x),Y=Math.round(p.y);
   ctx.fillStyle='rgba(0,0,0,.28)';ctx.fillRect(X+11,(p.onCar?Y+FOOT:GROUND)-1,22,3);
@@ -3480,10 +3498,9 @@ function drawPlayer(p){
   else ctx.translate(X,Y);
   if(G.red>0&&G.mode==='play'){ctx.globalAlpha=0.28;ctx.drawImage(spr,-14,0);ctx.globalAlpha=0.14;ctx.drawImage(spr,-28,0);ctx.globalAlpha=1;}
   ctx.drawImage(spr,0,0);
-  G.imoFa=poseFa(spr,CH);
+  G.imoFa=poseFa(base,CH);
   if(G.imoHold){const h=handXY(G.imoFa);drawYakiimo(h[0]+3,h[1]-0.3,-0.35,!G.imoBit);const hx=Math.round(h[0]),hy=Math.round(h[1]);ctx.fillStyle=OUTLINE;ctx.fillRect(hx-2,hy-2,4,5);ctx.fillStyle=C.skin;ctx.fillRect(hx-1,hy-1,3,3);ctx.fillStyle=C.skinD;ctx.fillRect(hx-1,hy+1,3,1); // 芋をにぎる手（芋の上にかぶせる）
     if(G.mode==='intro'||!G.imoBit){for(let i=0;i<(G.imoBit?2:3);i++){const tt=(G.time*0.45+i*(G.imoBit?14:9.3))%28,al=tt<14?0.95:Math.max(0,(28-tt)/14)*0.95,bx=h[0]+5+i*2.5,by=h[1]-4-tt*0.5;for(let k=0;k<6;k++){const px=Math.round(bx+Math.sin((k+tt)*0.7+i*2)*1.4),py=Math.round(by-k);ctx.fillStyle=`rgba(120,120,130,${al*0.45})`;ctx.fillRect(px+1,py,1,1);ctx.fillStyle=`rgba(255,255,255,${al})`;ctx.fillRect(px,py,1,1);}}}}
-  if(G.waveT>0&&G.mode==='play'){const sw=Math.sin(G.waveT/3)*2.5;ctx.strokeStyle=OUTLINE;ctx.lineCap='round';ctx.lineWidth=4.6;ctx.beginPath();ctx.moveTo(18,21);ctx.lineTo(15+sw,9);ctx.stroke();ctx.strokeStyle=C.skinD;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(18,21);ctx.lineTo(15+sw,9);ctx.stroke();ctx.fillStyle=C.blueD;ctx.fillRect(15.5,17,4,4);}
   if(G.red>0&&G.mode==='play'){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=(0.6+0.25*Math.sin(G.time/3))*(G.red<60?G.red/60:1);ctx.drawImage(spr,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;}
   if((G.mode==='play'&&G.red<=0)||G.mode==='clear'){const fp=firePoints(spr),t=G.time;
     if(G.shoe==='fire')for(const [fx,fy] of fp.feet)flame(fx,fy+1,2.2,t*0.6+fx);
@@ -3821,6 +3838,8 @@ function draw(){
   if(G.mode==='cars1'||G.mode==='cars2'||G.mode==='cars3'){drawCarSheet(G.mode==='cars1'?1:G.mode==='cars2'?2:3);return;}
   if(/^cmp\d$/.test(G.mode)){drawCompare(+G.mode.slice(3));return;}
   if(G.mode==='tornsheet'){drawTornSheet();return;}
+  if(G.mode==='wavesheet'){ctx.fillStyle='#8fb7d6';ctx.fillRect(0,0,W,H);ctx.imageSmoothingEnabled=false;
+    [CHAR,CHAR_TORN1,CHAR_TORN2].forEach((c,r)=>{[c.idle,c.run[2],waveSpr(c,0,0),waveSpr(c,0,1),waveSpr(c,2,0),waveSpr(c,2,1),waveSpr(c,6,0),waveSpr(c,6,1)].forEach((q,i)=>ctx.drawImage(q,4+i*59,r*88,CW*1.6,CH*1.6));});return;}
   if(G.mode==='bgview'){const c=snapScene();if(c)ctx.drawImage(c,0,0,W,H);return;}
   ctx.save();
   if(G.shake>0)ctx.translate(rnd(-2,2),rnd(-2,2));
@@ -3890,6 +3909,7 @@ function debugShot(name){
   if(name==='title'||name==='title2'||name==='title3'){G.mode='title';G.time=name==='title'?44:name==='title3'?300:150;G.km=name==='title'?0:100;G.freeze=true;return;}
   if(name==='imohold'){for(let i=0;i<322;i++)update();G.freeze=true;return;}
   {const m=/^at([\d.]+)_(\d+)$/.exec(name);if(m){while(G.mode==='intro')update();G.km=+m[1];G.cars=[];for(let i=0;i<+m[2];i++){G.p.inv=9;G.cars=[];update();}G.p.inv=0;G.freeze=true;return;}}
+  if(name==='wavesheet'){G.freeze=true;G.mode='wavesheet';return;}
   if(name==='kids3'){while(G.mode==='intro')update();while(!G.kids||G.kids.x>G.p.x-20){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
   if(name==='bridge1'){while(G.mode==='intro')update();G.km=52.75;G.cars=[];for(let i=0;i<3;i++){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
   if(name==='kids'||name==='kids2'){while(G.mode==='intro')update();while(!G.kids||!G.kids.said){G.p.inv=9;update();}const n=name==='kids'?10:85;for(let i=0;i<n;i++){G.p.inv=9;update();}G.p.inv=0;G.freeze=true;return;}
